@@ -1,0 +1,246 @@
+# Unfortunetely, the way I opted to utilize directional movement couldn't be transferred directly to a 2d array
+# As you can tell by running, you can make the map move in the direction it is "pointing" at, but when you rotate the map, each individual cell rotates around it's center
+# instead of rotating around the central axis.
+# I did a bunch of math and found this buetiful trigonomic equation that related the position of each point as a function of theta (direction), but it would not implement easily into my current map layout
+# It found the rotaional vectors for individual points, whereas the previous system was working with a single square cell.
+#
+# The pros of this system is 
+# a) it will allow me to work with things besides squares, and 
+# b) it *should* be much easier to read and be easier to use with an updated map layout
+# Cons:
+# c) i will have to reorganize how I store map data
+#
+# Here is the equation I was using:
+# For each corner of the cell: (car.get_x() + square_size*(square_index + cos(direction + corner_angle)), car.get_y() + square_size*(square_index + sin(direction + corner_angle)))
+# As you can see, the car.get(x) was not attached to any direction coefficient so the structure as a whole could never rotate completely.
+# 
+
+
+"""
+IMPORTS -----------------------------------------------------
+"""
+from turtle import speed
+
+for i in range (1):
+    import sys, pygame
+    import random
+    import os
+    import math
+    os.environ['SDL_AUDIODRIVER'] = 'dsp'
+print("Game loading...")
+
+"""
+CONSTANTS AND VARIABLES -----------------------------------------------------
+"""
+for i in range (1):
+    # INITIALIZE PYGAME
+    pygame.init()
+    clock = pygame.time.Clock()
+    SPEED = 60
+    clock.tick(SPEED)
+    
+    # SIZES
+    WIDTH, HEIGHT = 500, 500
+    ROWS, COLS = 10, 10
+    SQUARE_SIZE = WIDTH // COLS
+    
+    #COLORS
+    LIGHT = "grey35"
+    DARK = "grey15"
+    
+    #CONSTANTS
+    STREET = 1
+    HOUSE = 0
+    
+    #GAME BOARD
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    
+
+"""
+FUNCTIONS (WILL ORGANIZE LATER) ------------------------------------------------
+"""
+for i in range (1):
+    
+    #rounds the number to the nearest square size-> simplified to roundss for readability of code
+    def roundss(num):
+        amount = num
+        quotient = 0
+        while(amount > SQUARE_SIZE):
+            amount = amount - SQUARE_SIZE
+            quotient = quotient + 1
+        return num - amount
+            
+    # returns True if tile is a house, returns False if tile is a street
+    def is_house(x,y):
+        if track.locs[x][y] == HOUSE:
+            return True
+        else:
+            return False
+    
+"""
+CLASS CAR --------------------------------------------------------------------------------------------------
+"""
+class Car:
+    #constants that will be accessed by all objects:
+    carx = SQUARE_SIZE*1
+    cary = SQUARE_SIZE*9
+    speed = 0
+    acc = .75
+    direction = 270 
+    turn_radius = 5
+    friction = 0.15
+
+    #variables specific to car object:
+    size = 10
+
+    #allows access to direction and speed of car
+    def get_direction(self):
+        return self.direction
+    def get_speed(self):
+        return self.speed
+    #allows access to car's x and y coordinates
+    def get_carx(self):
+        return self.carx
+    def get_cary(self):
+        return self.cary
+    #allows access to car's turn radius, friction, speed, and acceleration
+    def get_turn_radius(self):
+        return self.turn_radius
+    def get_friction(self):
+        return self.friction
+    def get_acc(self):
+        return self.acc
+    def get_speed(self):
+        return self.speed
+    
+car = Car()
+
+"""
+CLASS TRACK -------------------------------------------------------------------------------------------
+"""
+
+class Track:
+
+    locs =  [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    ]
+
+track = Track()
+
+#subclass square of track
+"""
+CLASS SQUARE (TRACK) -------------------------------------------------------------------------------------------
+"""
+class Square(Track):
+    #constants
+    turn_radius = 1.5
+    color = LIGHT
+    #variables for each box
+    posx = WIDTH/2
+    posy = HEIGHT/2
+    size = 10
+
+    # init statement
+    def __init__(self, posx, posy, direction, size, color = LIGHT):
+        self.posx = posx
+        self.posy = posy
+        self.size = size
+        self.direction = direction
+        self.color = color
+
+    #completed squrare:
+    def draw_box(self, posx, posy, direction, size):
+        #corners (pos of car + pos of square + angle)
+        topRightCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction)) - size*math.sin(math.radians(direction))), (car.get_cary() + posy + size*math.sin(math.radians(direction)) + size*math.cos(math.radians(direction)))
+        bottomRightCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction+90)) - size*math.sin(math.radians(direction+90))), (car.get_cary() + posy + size*math.sin(math.radians(direction+90)) + size*math.cos(math.radians(direction+90)))
+        topLeftCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction-90)) - size*math.sin(math.radians(direction-90))), (car.get_cary() + posy + size*math.sin(math.radians(direction-90)) + size*math.cos(math.radians(direction-90)))
+        bottomLeftCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction+180)) - size*math.sin(math.radians(direction+180))), (car.get_cary() + posy + size*math.sin(math.radians(direction+180)) + size*math.cos(math.radians(direction+180)))
+
+        points = (topRightCorner, bottomRightCorner, bottomLeftCorner, topLeftCorner)
+        pygame.draw.polygon(screen, self.color, points)
+
+
+
+        
+
+"""
+MAIN GAME LOOP --------------------------------------------------------------------------------------------------
+"""
+
+running = True
+while running:
+    
+    clock.tick(SPEED)
+
+    screen.fill((0, 0, 0))
+    
+    #Events
+    for event in pygame.event.get():
+        #redundant quit program
+        if event.type == pygame.QUIT:
+            running = False
+
+        #MOVEMENT
+        keys = pygame.key.get_pressed()
+    
+    #centers car
+    if keys[pygame.K_SPACE]:
+        car.carx = WIDTH/2
+        car.cary = HEIGHT/2
+
+    #changes direction
+    if keys[pygame.K_LEFT]:
+        #GOAL: car will travel in a circle if holding left
+        car.direction = (car.direction - car.turn_radius) % 360
+    if keys[pygame.K_RIGHT]:
+        #GOAL: car will travel in a circle if holding right
+        car.direction = (car.direction + car.turn_radius) % 360
+
+    #changes speed
+    if car.speed > 0.1:
+        car.acc = 1/car.speed
+    else:
+        car.acc = .75
+    if keys[pygame.K_UP]:
+        car.speed += car.acc
+    if keys[pygame.K_DOWN]:
+        car.speed -= car.acc
+    #friction
+    if car.speed > 0:
+        car.speed -= car.friction
+        if car.speed < car.friction+0.1:
+            car.speed = 0
+    elif car.speed < 0:
+        car.speed += car.friction
+        if car.speed < -car.friction-0.1:
+            car.speed = -1
+
+    #moves car
+    car.carx += car.speed * (math.cos(math.radians(car.direction)))
+    car.cary += car.speed * (math.sin(math.radians(car.direction)))
+    
+
+    #TRACK
+
+    for i in range(ROWS):
+        for j in range(COLS):
+            if track.locs[i][j] == HOUSE:
+                box = Square(j*SQUARE_SIZE, i*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE/4)
+                box.draw_box(box.posx, box.posy, box.direction, box.size)
+
+    box = Square(car.get_carx(), car.get_cary(), car.get_direction(), SQUARE_SIZE/2, "white")
+    box.draw_box(box.posx, box.posy, box.direction, box.size)
+
+        
+    pygame.display.flip()
+   
