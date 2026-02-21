@@ -1,0 +1,166 @@
+# This was original code that created a blank map with a car
+# I was experimenting with moevement and so I added a "trail" car that showed which direction was pointing. 
+# Overall, not to hard to configure. I used the (a*(cosd-sind), a*(cosd-sind)) to track direction and movement
+# Arrow keys altered direction by a set amount, and Up and Down keys activated acceleration to increase speed
+# I decreased acceleration's power and added friction to automatically slow down the car
+# Lastly, I tried to add an out of bounds stop. I decided to check if the car was going to head out of bounds by checking it's direction and position, but it didn't work very well, to many comparisons and checks made it confusing.
+# Besides, I wasn't going to need it once I transfer movement to the map in phase 2
+#
+
+
+"""
+IMPORTS -----------------------------------------------------
+"""
+from turtle import speed
+
+for i in range (1):
+    import sys, pygame
+    import random
+    import os
+    import math
+    os.environ['SDL_AUDIODRIVER'] = 'dsp'
+print("Game loading...")
+
+"""
+CONSTANTS AND VARIABLES -----------------------------------------------------
+"""
+for i in range (1):
+    # INITIALIZE PYGAME
+    pygame.init()
+    clock = pygame.time.Clock()
+    SPEED = 60
+    clock.tick(SPEED)
+    
+    # SIZES
+    WIDTH, HEIGHT = 500, 500
+    ROWS, COLS = 1, 1
+    SQUARE_SIZE = WIDTH // COLS
+    
+    #COLORS
+    LIGHT = "grey35"
+    DARK = "grey15"
+    
+    #CONSTANTS
+    STREET = 1
+    HOUSE = 0
+    
+    #GAME BOARD
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    board = [[0 for _ in range(COLS)] for _ in range(ROWS) ]
+    
+
+"""
+FUNCTIONS (WILL ORGANIZE LATER) ------------------------------------------------
+"""
+for i in range (1):
+    #adds dead and alive squares
+    def draw_board(carx, cary):
+        for row in range(ROWS):
+            for col in range(COLS):
+                if board[row][col] == HOUSE:
+                    color = DARK
+                else:
+                    color = LIGHT
+                # Calculate position and draw the rectangle
+                pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+        
+        #displays car
+        pygame.draw.rect(screen, "white", (carx, cary, car.size, car.size)) #base car rectangle
+        
+        pygame.draw.rect(screen, "white", (carx+(math.cos(math.radians(car.direction)))*car.size, cary+(math.sin(math.radians(car.direction)))*car.size, car.size, car.size))
+        pygame.display.flip()
+    
+    #rounds the number to the nearest square size-> simplified to roundss for readability of code
+    def roundss(num):
+        amount = num
+        quotient = 0
+        while(amount > SQUARE_SIZE):
+            amount = amount - SQUARE_SIZE
+            quotient = quotient + 1
+        return num - amount
+            
+    # returns True if tile is a house, returns False if tile is a street
+    def is_house(x,y):
+        if board[x][y] == HOUSE:
+            return True
+        else:
+            return False
+    
+""" creates car object """
+class Car:
+    carx = WIDTH/2
+    cary = HEIGHT/2
+    speed = 0
+    acc = .75
+    direction = 0
+    turn_radius = 10
+    size = 10
+    friction = 0.25
+    
+    
+    """ Functions for car and stuff """
+
+    
+        
+
+car = Car()
+
+
+running = True
+while running:
+    
+    clock.tick(SPEED)
+    
+    #Events
+    for event in pygame.event.get():
+        #redundant quit program
+        if event.type == pygame.QUIT:
+            running = False
+
+        #MOVEMENT
+        keys = pygame.key.get_pressed()
+    
+    #centers car
+    if keys[pygame.K_SPACE]:
+        car.carx = WIDTH/2
+        car.cary = HEIGHT/2
+
+    #changes direction
+    if keys[pygame.K_LEFT]:
+        #GOAL: car will travel in a circle if holding left
+        car.direction = (car.direction - car.turn_radius) % 360
+    if keys[pygame.K_RIGHT]:
+        #GOAL: car will travel in a circle if holding right
+        car.direction = (car.direction + car.turn_radius) % 360
+
+     #changes speed
+    if car.speed > 0.1:
+        car.acc = 1/car.speed
+    else:
+        car.acc = .75
+    if keys[pygame.K_UP]:
+        car.speed += car.acc
+    if keys[pygame.K_DOWN]:
+        car.speed -= car.acc
+    #friction
+    if car.speed > 0:
+        car.speed -= car.friction
+        if car.speed < car.friction+0.1:
+            car.speed = 0
+    elif car.speed < 0:
+        car.speed += car.friction
+        if car.speed < -car.friction-0.1:
+            car.speed = -1
+    
+    #moves car -> if the car is going out of bounds, it will move in the opposite direction, otherwise it will move in the direction it is facing
+    #needs work
+    if ((((car.carx > WIDTH-car.size) and (car.direction >= 0 and car.direction <= 180)) or ((car.carx < 0+car.size) and (car.direction >= 180 or car.direction <= 360)))):
+        car.carx -= car.speed * (math.cos(math.radians(car.direction)))
+    else:
+        car.carx += car.speed * (math.cos(math.radians(car.direction)))
+    if ((((car.cary > HEIGHT-car.size) and (car.direction < 270 and car.direction > 90)) or ((car.cary < 0+car.size) and (car.direction <= 90 or car.direction >= 270)))):
+        car.cary -= car.speed * (math.sin(math.radians(car.direction)))
+    else:
+        car.cary += car.speed * (math.sin(math.radians(car.direction)))
+        
+    draw_board(car.carx, car.cary)
