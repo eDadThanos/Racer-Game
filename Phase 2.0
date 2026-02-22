@@ -1,19 +1,10 @@
-# Unfortunetely, the way I opted to utilize directional movement couldn't be transferred directly to a 2d array
-# As you can tell by running, you can make the map move in the direction it is "pointing" at, but when you rotate the map, each individual cell rotates around it's center
-# instead of rotating around the central axis.
-# I did a bunch of math and found this buetiful trigonomic equation that related the position of each point as a function of theta (direction), but it would not implement easily into my current map layout
-# It found the rotaional vectors for individual points, whereas the previous system was working with a single square cell.
+# Almost done implementing formula
+# The equation uses arcsin and arccos so it can't find it's negative values
+# That means I have to make it figure out what quadrant the point is before processing
+# I might have to change the way I store stuff later but for now its still working
 #
-# The pros of this system is 
-# a) it will allow me to work with things besides squares, and 
-# b) it *should* be much easier to read and be easier to use with an updated map layout
-# Cons:
-# c) i will have to reorganize how I store map data
-#
-# Here is the equation I was using:
-# For each corner of the cell: (car.get_x() + square_size*(square_index + cos(direction + corner_angle)), car.get_y() + square_size*(square_index + sin(direction + corner_angle)))
-# As you can see, the car.get(x) was not attached to any direction coefficient so the structure as a whole could never rotate completely.
-# 
+# One thing left: figure out how to render objects on the negative y axis, for some reason they aren't showing up
+# Also need to double check taht the quadrants are lining up correctly!
 
 
 """
@@ -41,7 +32,7 @@ for i in range (1):
     
     # SIZES
     WIDTH, HEIGHT = 500, 500
-    ROWS, COLS = 10, 10
+    ROWS, COLS = 5, 5
     SQUARE_SIZE = WIDTH // COLS
     
     #COLORS
@@ -83,11 +74,11 @@ CLASS CAR ----------------------------------------------------------------------
 """
 class Car:
     #constants that will be accessed by all objects:
-    carx = SQUARE_SIZE*1
-    cary = SQUARE_SIZE*9
+    carx = HEIGHT/2
+    cary = WIDTH/2
     speed = 0
     acc = .75
-    direction = 270 
+    direction = 0
     turn_radius = 5
     friction = 0.15
 
@@ -123,16 +114,12 @@ CLASS TRACK --------------------------------------------------------------------
 class Track:
 
     locs =  [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
     ]
 
 track = Track()
@@ -160,14 +147,44 @@ class Square(Track):
 
     #completed squrare:
     def draw_box(self, posx, posy, direction, size):
-        #corners (pos of car + pos of square + angle)
-        topRightCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction)) - size*math.sin(math.radians(direction))), (car.get_cary() + posy + size*math.sin(math.radians(direction)) + size*math.cos(math.radians(direction)))
-        bottomRightCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction+90)) - size*math.sin(math.radians(direction+90))), (car.get_cary() + posy + size*math.sin(math.radians(direction+90)) + size*math.cos(math.radians(direction+90)))
-        topLeftCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction-90)) - size*math.sin(math.radians(direction-90))), (car.get_cary() + posy + size*math.sin(math.radians(direction-90)) + size*math.cos(math.radians(direction-90)))
-        bottomLeftCorner = (car.get_carx() + posx + size*math.cos(math.radians(direction+180)) - size*math.sin(math.radians(direction+180))), (car.get_cary() + posy + size*math.sin(math.radians(direction+180)) + size*math.cos(math.radians(direction+180)))
+        #center of square (hypotenuse * cos/sin(direction + arcsin/arcos(1/hypotonuse)))
+        hypotenuse = math.hypot(posx, posy)
 
-        points = (topRightCorner, bottomRightCorner, bottomLeftCorner, topLeftCorner)
-        pygame.draw.polygon(screen, self.color, points)
+
+        #only thing left is to cover squares allong the negative y axis
+        if hypotenuse > 0:
+            if posx >= 0:
+                if posy >= 0:
+                    self.color = "red"
+                    centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))))
+                else:
+                    self.color = "green"
+                    centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(180+ direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.sin(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
+            else:
+                if posy > 0:
+                    self.color = "yellow"
+                    centeredSquare = (car.get_carx() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.cos(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
+                else:
+                    self.color = "blue"
+                    centeredSquare = (car.get_carx() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.cos(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
+
+        else:
+            centeredSquare = (car.get_carx(), car.get_cary())
+
+        #updates direction so that the squares will be "straight"
+        direction += 45
+
+        #corners (center of square + size*sin/cos(direction + offset))
+        topRight = (centeredSquare[0] + size*math.cos(math.radians(direction)), centeredSquare[1] + size*math.sin(math.radians(direction)))
+        topLeft = (centeredSquare[0] + size*math.cos(math.radians(direction + 270)), centeredSquare[1] + size*math.sin(math.radians(direction + 270)))
+        bottomRight = (centeredSquare[0] + size*math.cos(math.radians(direction + 90)), centeredSquare[1] + size*math.sin(math.radians(direction + 90)))
+        bottomLeft = (centeredSquare[0] + size*math.cos(math.radians(direction + 180)), centeredSquare[1] + size*math.sin(math.radians(direction + 180)))
+
+        #resets direction for car movement
+        direction -= 45
+
+        #draws...
+        pygame.draw.polygon(screen, self.color, (topRight, topLeft, bottomLeft, bottomRight))
 
 
 
@@ -197,6 +214,8 @@ while running:
     if keys[pygame.K_SPACE]:
         car.carx = WIDTH/2
         car.cary = HEIGHT/2
+        car.direction = 0
+        car.speed = 0
 
     #changes direction
     if keys[pygame.K_LEFT]:
@@ -233,13 +252,15 @@ while running:
     #TRACK
 
     for i in range(ROWS):
+        mid_i = ROWS//2
         for j in range(COLS):
+            mid_j = COLS//2
             if track.locs[i][j] == HOUSE:
-                box = Square(j*SQUARE_SIZE, i*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE/4)
+                box = Square((mid_j-j)*SQUARE_SIZE, (mid_i-i)*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE//math.sqrt(2))
                 box.draw_box(box.posx, box.posy, box.direction, box.size)
 
-    box = Square(car.get_carx(), car.get_cary(), car.get_direction(), SQUARE_SIZE/2, "white")
-    box.draw_box(box.posx, box.posy, box.direction, box.size)
+    #box = Square(car.get_carx(), car.get_cary(), car.get_direction(), SQUARE_SIZE/2, "white")
+    #box.draw_box(box.posx, box.posy, box.direction, box.size)
 
         
     pygame.display.flip()
