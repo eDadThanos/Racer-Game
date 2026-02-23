@@ -1,10 +1,8 @@
-# Almost done implementing formula
-# The equation uses arcsin and arccos so it can't find it's negative values
-# That means I have to make it figure out what quadrant the point is before processing
-# I might have to change the way I store stuff later but for now its still working
-#
-# One thing left: figure out how to render objects on the negative y axis, for some reason they aren't showing up
-# Also need to double check taht the quadrants are lining up correctly!
+# Works enough
+# Map rotates around itself
+# However, I want the map to rotate around the car
+# Considering the fact that the quadrants are all mixed up, I think I will just revert to the rotation matrix (cosd-sind, cosd+sind)
+# 
 
 
 """
@@ -74,11 +72,12 @@ CLASS CAR ----------------------------------------------------------------------
 """
 class Car:
     #constants that will be accessed by all objects:
-    carx = HEIGHT/2
-    cary = WIDTH/2
+    start_square = (4,1)
+    carx = start_square[0]*SQUARE_SIZE
+    cary = start_square[1]*SQUARE_SIZE
     speed = 0
     acc = .75
-    direction = 0
+    direction = 270 #game will break if direction is NOT 270!!
     turn_radius = 5
     friction = 0.15
 
@@ -113,14 +112,18 @@ CLASS TRACK --------------------------------------------------------------------
 
 class Track:
 
+    #locs is flawed. the coords don't line up because im bad at trig
     locs =  [
         [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0]
+        [1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0]
     ]
+
+    #translates loc into readable format (for the comp becacuse it reads it weird)
+
 
 track = Track()
 
@@ -155,18 +158,26 @@ class Square(Track):
         if hypotenuse > 0:
             if posx >= 0:
                 if posy >= 0:
-                    self.color = "red"
+                    #self.color = "red"
                     centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))))
                 else:
-                    self.color = "green"
-                    centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(180+ direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.sin(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
+                    if posx == 0:
+                     #self.color = "orange"
+                     centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))))
+                    else:
+                        #self.color = "green"
+                        centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(180+ direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.sin(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
             else:
                 if posy > 0:
-                    self.color = "yellow"
+                    #self.color = "yellow"
                     centeredSquare = (car.get_carx() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.cos(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
                 else:
-                    self.color = "blue"
-                    centeredSquare = (car.get_carx() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.cos(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
+                    if posy == 0: 
+                        #self.color = "purple"
+                        centeredSquare = (car.get_carx() + hypotenuse*math.cos(math.radians(direction + 180)), car.get_cary() + hypotenuse*math.sin(math.radians(direction + 180)))
+                    else:
+                        #self.color = "blue"
+                        centeredSquare = (car.get_carx() + hypotenuse*math.sin(math.radians(direction + math.degrees(math.asin((posy)/hypotenuse)))), car.get_cary() + hypotenuse*math.cos(math.radians(180 + direction + math.degrees(math.asin((posy)/hypotenuse)))))
 
         else:
             centeredSquare = (car.get_carx(), car.get_cary())
@@ -212,9 +223,9 @@ while running:
     
     #centers car
     if keys[pygame.K_SPACE]:
-        car.carx = WIDTH/2
-        car.cary = HEIGHT/2
-        car.direction = 0
+        car.carx = car.start_square[0]*SQUARE_SIZE
+        car.cary = car.start_square[1]*SQUARE_SIZE
+        car.direction = 270
         car.speed = 0
 
     #changes direction
@@ -242,7 +253,7 @@ while running:
     elif car.speed < 0:
         car.speed += car.friction
         if car.speed < -car.friction-0.1:
-            car.speed = -1
+            car.speed = 0
 
     #moves car
     car.carx += car.speed * (math.cos(math.radians(car.direction)))
@@ -256,7 +267,7 @@ while running:
         for j in range(COLS):
             mid_j = COLS//2
             if track.locs[i][j] == HOUSE:
-                box = Square((mid_j-j)*SQUARE_SIZE, (mid_i-i)*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE//math.sqrt(2))
+                box = Square((mid_j-j)*SQUARE_SIZE, (mid_i-i)*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE/math.sqrt(2))
                 box.draw_box(box.posx, box.posy, box.direction, box.size)
 
     #box = Square(car.get_carx(), car.get_cary(), car.get_direction(), SQUARE_SIZE/2, "white")
@@ -264,4 +275,3 @@ while running:
 
         
     pygame.display.flip()
-   
