@@ -158,14 +158,29 @@ class Square(Track):
 
     #completed squrare:
     def draw_map(self, posx, posy, direction, size):  # IMPORTANT ONE  #
-        #center of square (cosd-sind, sind+cosd)
+        #variables used to locate center
         rad = math.radians(direction)
+        hypotenuse = math.sqrt(posx**2 + posy**2)
         
         rx = posx * math.cos(rad) - posy * math.sin(rad)
         ry = posx * math.sin(rad) + posy * math.cos(rad)
+        if hypotenuse != 0:
+            angle = rad + math.pi/4 + math.asin(posy/hypotenuse)
+            cos_angle = math.cos(angle)
+            sin_angle = math.sin(angle)
+            
+            if (cos_angle - sin_angle) != 0:
+                m = (cos_angle + sin_angle)/(cos_angle - sin_angle)
+            else:
+                m = 0
+        else:
+            m = 0
 
-        # Apply to screen (adding to car.carx/cary which is WIDTH/2, HEIGHT/2)
-        center = (car.dist_from_intersection()[0] + posx + rx, car.dist_from_intersection()[1] + posy + ry)
+
+
+
+        # Apply variables to screen (adding to car.carx/cary which is WIDTH/2, HEIGHT/2)
+        center = (car.get_carx() + rx, car.get_cary() + ry)
 
         pygame.draw.circle(screen, "red", (center[0], center[1]), car.size)
 
@@ -243,22 +258,22 @@ while running:
             car.speed = 0
     elif car.speed < 0:
         car.speed += car.friction
-        if car.speed < -car.friction-0.1:
-            car.speed = 0
+    
 
     #moves car
     car.carx += car.speed * (math.cos(math.radians(car.direction)))
     car.cary += car.speed * (math.sin(math.radians(car.direction)))
     
-
+    #where the map rotates around
+    car_x = 0
+    car_y = 0
+    
     #TRACK
 
     for i in range(ROWS):
-        mid_i = ROWS//2
         for j in range(COLS):
-            mid_j = COLS//2
             if track.locs[i][j] == HOUSE:
-                box = Square((mid_j-j)*SQUARE_SIZE, (mid_i-i)*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE/math.sqrt(2))
+                box = Square((j)*SQUARE_SIZE-car_x, (i)*SQUARE_SIZE-car_y, car.get_direction(), SQUARE_SIZE/math.sqrt(2))
                 box.draw_map(box.posx, box.posy, box.direction, box.size)
 
     #box = Square(car.get_carx(), car.get_cary(), car.get_direction(), SQUARE_SIZE/2, "white")
