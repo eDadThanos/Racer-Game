@@ -1,3 +1,5 @@
+
+
 """
 IMPORTS -----------------------------------------------------
 """
@@ -158,32 +160,18 @@ class Square(Track):
 
     #completed squrare:
     def draw_map(self, posx, posy, direction, size):  # IMPORTANT ONE  #
-        #variables used to locate center
+        #center of square (cosd-sind, sind+cosd)
         rad = math.radians(direction)
-        hypotenuse = math.sqrt(posx**2 + posy**2)
+        t = size
         
-        rx = posx * math.cos(rad) - posy * math.sin(rad)
-        ry = posx * math.sin(rad) + posy * math.cos(rad)
-        if hypotenuse != 0:
-            angle = rad + math.pi/4 + math.asin(posy/hypotenuse)
-            cos_angle = math.cos(angle)
-            sin_angle = math.sin(angle)
-            
-            if (cos_angle - sin_angle) != 0:
-                m = (cos_angle + sin_angle)/(cos_angle - sin_angle)
-            else:
-                m = 0
-        else:
-            m = 0
+        rx = (posx-math.tan(rad) * math.cos(rad)) - (posy-t) * math.sin(rad)
+        ry = (posx-math.tan(rad)) * math.sin(rad) + (posy-t) * math.cos(rad)
 
-
-
-
-        # Apply variables to screen (adding to car.carx/cary which is WIDTH/2, HEIGHT/2)
-        center = (car.get_carx() + rx, car.get_cary() + ry)
+        # Apply to screen (adding to car.carx/cary which is WIDTH/2, HEIGHT/2)
+        center = (rx, ry)
 
         pygame.draw.circle(screen, "red", (center[0], center[1]), car.size)
-
+        pygame.draw.line(screen, "red", (0, 0), (center[0], center[1]))
     def draw_square(self, center, direction, size):
         
         #updates direction so that the squares will be "straight"
@@ -258,22 +246,20 @@ while running:
             car.speed = 0
     elif car.speed < 0:
         car.speed += car.friction
-    
+        if car.speed < -car.friction-0.1:
+            car.speed = 0
 
     #moves car
     car.carx += car.speed * (math.cos(math.radians(car.direction)))
     car.cary += car.speed * (math.sin(math.radians(car.direction)))
     
-    #where the map rotates around
-    car_x = 0
-    car_y = 0
-    
+
     #TRACK
 
     for i in range(ROWS):
         for j in range(COLS):
             if track.locs[i][j] == HOUSE:
-                box = Square((j)*SQUARE_SIZE-car_x, (i)*SQUARE_SIZE-car_y, car.get_direction(), SQUARE_SIZE/math.sqrt(2))
+                box = Square((j)*SQUARE_SIZE, (i)*SQUARE_SIZE, car.get_direction(), SQUARE_SIZE/math.sqrt(2))
                 box.draw_map(box.posx, box.posy, box.direction, box.size)
 
     #box = Square(car.get_carx(), car.get_cary(), car.get_direction(), SQUARE_SIZE/2, "white")
