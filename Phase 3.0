@@ -23,8 +23,8 @@ for i in range (1):
     
     # SIZES
     WIDTH, HEIGHT = 800, 800
-    ROWS, COLS = 25, 25
-    SQUARE_SIZE = 50
+    ROWS, COLS = 100, 100
+    SQUARE_SIZE = 100
     
     #COLORS
     LIGHT = "grey35"
@@ -75,11 +75,12 @@ class Track:
 
     #Global Constants:
     start_square = (0,0) # will use later to determine starting square of maps
+    starting_direction = 270
     mapx = WIDTH/2 # distance from center of locs (~8) to top left corner
     mapy = HEIGHT/2
     speed = 0 # obvious
     acc = .25 # constant
-    direction = 270 #game will break if direction is NOT 270!!
+    direction = starting_direction #game will break if direction is NOT 270!!
     turn_radius = 3 # constant
     friction = 0.15 # constant
 
@@ -88,6 +89,7 @@ class Track:
     for i in range(ROWS):
         for j in range(COLS):
             locs.append([i,j])
+    locs_center = (ROWS//2, COLS//2)
     #add more later
 
     #laser blue pointer in current direction
@@ -95,7 +97,6 @@ class Track:
         #for navigation
         for i in range (25):
             pygame.draw.circle(screen, (0, 0, 255-i*10), (WIDTH//2+5*i*math.cos(rad),HEIGHT//2+5*i*math.sin(rad)), car.size)
-        pygame.draw.circle(screen, "blue", (track.mapx,track.mapy), car.size)
 
     #completed squrare: # just gotta add an arctan somewhere of 
     def locate_point(self, posx, posy, mapx, mapy, rad): 
@@ -103,12 +104,19 @@ class Track:
         posx -= mapx
         posy -= mapy
 
-        rx = (posx * math.cos(rad)) - (posy * math.sin(rad))
-        ry = (posx * math.sin(rad)) + (posy * math.cos(rad))
+        #keep car moving "up"
+        pi = math.pi
+
+        rad = math.radians((track.starting_direction-math.degrees(rad))%360)-pi
+
+        rx = (posx * math.cos((rad)) - (posy * math.sin(rad)))
+        ry = (posx * math.sin((rad)) + (posy * math.cos(rad)))
 
         #moves back to center
         center = (rx + (WIDTH / 2), ry + (HEIGHT / 2))
 
+        #checks if point will actually load before displaying point
+        
         self.draw_point(center)
     
     def draw_point(self, center):
@@ -135,11 +143,13 @@ class Track:
         pygame.draw.polygon(screen, self.color, (topRight, topLeft, bottomLeft, bottomRight))
 
     def expected_direction(self, rad):
-        pi = math.pi
-        dir = pi + rad * 2
+        dir = rad * 2 - math.pi
+        return dir
+        
 
+    def laser(self, rad):
         for i in range (25):
-            pygame.draw.circle(screen, (255-i*10, 0, 0), (WIDTH//2+5*i*math.cos(dir),HEIGHT//2+5*i*math.sin(dir)), car.size)
+            pygame.draw.circle(screen, (255-i*10, 255-i*9, 255-i*10), (WIDTH//2,HEIGHT//2-5*i), car.size)
 
     
 track = Track()
@@ -151,6 +161,7 @@ track = Track()
 """
 MAIN GAME LOOP --------------------------------------------------------------------------------------------------
 """
+a=2/math.pi
 
 running = True
 while running:
@@ -172,7 +183,7 @@ while running:
     if keys[pygame.K_SPACE]:
         track.mapx = WIDTH/2
         track.mapy = HEIGHT/2
-        track.direction = 270
+        track.direction = track.starting_direction
         track.speed = 0
 
     #changes direction
@@ -203,22 +214,23 @@ while running:
         track.speed += track.friction
     
     #converts direction to radians for operations
-    rad = math.radians(track.direction)
+    
 
     #moves car
-    #based on directional quadrants to reverse engineer correction
-    #checks on x
+    rad = math.radians(track.direction)
+
     track.mapx += track.speed * (math.cos(rad))
     track.mapy += track.speed * (math.sin(rad))
+    
 
+    
     #TRACK
-
+    #position:
     for i in range(ROWS*COLS):
-        track.locate_point(track.locs[i][0]*SQUARE_SIZE, track.locs[i][1]*SQUARE_SIZE, track.mapx, track.mapy, rad)
+        track.locate_point((track.locs[i][0] - COLS//2)*SQUARE_SIZE + WIDTH/2, (track.locs[i][1] - COLS//2)*SQUARE_SIZE + HEIGHT/2, track.mapx, track.mapy, rad)
 
-    track.draw_pointer(rad)
-    track.expected_direction(rad)
+    track.laser(rad)
     pygame.draw.circle(screen, "white", (WIDTH/2, HEIGHT/2), car.size)
-    pygame.draw.line(screen,"white", (WIDTH/2,0), (WIDTH/2, HEIGHT),2)
+    
     
     pygame.display.flip()
