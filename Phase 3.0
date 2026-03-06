@@ -83,6 +83,7 @@ class Track:
     start_square = (0,0) # will use later to determine starting square of maps
     starting_direction = 270
     mapx, mapy = WIDTH/2, HEIGHT/2 # Where should the center of the board be?
+    primitive = True
 
     def game_map(self,locs,length):
         for i in range(ROWS):
@@ -115,6 +116,7 @@ class Track:
         track.locs = locs
         track.locs_length = length
         track.start_square = start_square
+
     
     # advanced 
     def game_map_a(self):
@@ -125,6 +127,8 @@ class Track:
         track.locs = locs
         track.locs_length = length
         track.start_square = start_square
+        track.primitive = False
+
 
     #add more later
 
@@ -150,9 +154,11 @@ class Track:
         #moves back to center
         center = (rx + (WIDTH / 2), ry + (HEIGHT / 2))
 
-        #checks if point will actually load before displaying point
         if (center[0] < WIDTH+car.size) and (center[1] < HEIGHT+car.size) and (center[0] > 0-car.size) and (center[0] > 0-car.size):
-            self.draw_point(center, color)
+            if self.primitive:
+                self.draw_point(center, color)
+            else:
+                self.draw_square(center, self.direction, SQUARE_SIZE, color)
     
     def draw_point(self, center, color):
         
@@ -162,16 +168,13 @@ class Track:
     def draw_square(self, center, direction, size, color):
         
         #updates direction so that the squares will be "straight"
-        direction += 45
+        rad = math.radians(direction + 45)
 
         #corner
         topRight = (center[0] + size*math.cos(rad), center[1] + size*math.sin(rad))
         topLeft = (center[0] + size*math.cos(rad + 3*math.pi/2), center[1] + size*math.sin(rad + 3*math.pi/2))
         bottomRight = (center[0] + size*math.cos(rad + math.pi/2), center[1] + size*math.sin(rad + math.pi/2))
         bottomLeft = (center[0] + size*math.cos(rad + math.pi), center[1] + size*math.sin(rad + math.pi))
-        
-        #resets direction for car movement
-        direction -= 45
 
         #draws...
         pygame.draw.polygon(screen, color, (topRight, topLeft, bottomLeft, bottomRight))
@@ -255,14 +258,13 @@ while running:
             y = pos[1]
     
     #long if loops to find which box was clicked...
-
     if (cx<x) and (x<cx*5):
         track.game_map(track.locs,track.locs_length) # all primitive maps need track.locs already defined
         for i in range(4):
             if (cy*(i+4)<y) and (y<cy*(i+5)):
                 if i == 0:
                     print("you clicked pbox1!")
-                    track.game_map(track.locs,track.locs_length)
+                    track.game_map_1(track.locs,track.locs_length)
                     running = False
                 elif i == 1:
                     print("you clicked pbox2!")
@@ -273,12 +275,12 @@ while running:
                 elif i == 3:
                     print("you clicked pbox4!")
                     running = False
-    elif (cx<x*6) and (x<cx*10):
+    elif (cx*6 < x) and (x < cx*10):
         for i in range(4):
             # all advanced maps create their own track.locs
             if (cy*(i+4)<y) and (y<cy*(i+5)):
                 if i == 0:
-                    track.game_map_a(track.locs,track.locs_length)
+                    track.game_map_a()
                     print("you clicked abox1!")
                     running = False
                 elif i == 1:
@@ -321,8 +323,8 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        #MOVEMENT
-        keys = pygame.key.get_pressed()
+    #MOVEMENT
+    keys = pygame.key.get_pressed()
     
     #centers car
     if keys[pygame.K_SPACE]:
