@@ -118,13 +118,19 @@ class Track:
     
     # advanced 
     def game_map_a(self):
-        locs = [(0,0),(0,7),(2,9),(4,0),(6,7),(8,9),(10,9),(12,7),(12,0),(10,0),(10,6),(9,7),(6,4),(3,7),(2,6),(2,0)]
+        #readable locs
+        locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]]
+        #displayable locs
+        for i in range(track.locs_length):
+            track.locs[i][0] = track.locs[i][0]*SQUARE_SIZE
+            track.locs[i][1] = track.locs[i][1]*SQUARE_SIZE
         length = 16
-        start_square = (1,1)
+        start_square = (1*SQUARE_SIZE,1*SQUARE_SIZE)
         #return key but simplified
         track.locs = locs
         track.locs_length = length
         track.start_square = start_square
+
 
     #add more later
 
@@ -188,116 +194,110 @@ track = Track()
 """
 INSTRUCTION/OPENING -----------------------------------------------------------------------------------------
 """
-# Display to chose Game Map
-pygame.draw.rect(screen, "grey41", (0,0,WIDTH,HEIGHT))
+for i in range (1):
+    # Display to chose Game Map
+    pygame.draw.rect(screen, "grey41", (0,0,WIDTH,HEIGHT))
 
-#chunck size and box size   
-cx = WIDTH/11
-cy = HEIGHT/11
-bsize = (cx*4,cy*2)
+    #chunck size and box size   
+    cx = WIDTH/11
+    cy = HEIGHT/11
+    bsize = (cx*4,cy*2)
 
-#welcome box
-pygame.draw.rect(screen, "grey15", (cx,cy, cx*9,cy*2))
-pygame.draw.rect(screen, "grey8", (cx,cy, cx*9,cy*2),5)
-screen.blit(FONT.render(" RACER GAME XTREEME!!!! ", True, "white"), (cx+5 ,cy+5))
-screen.blit(FONT.render(" chose a map to start ", True, "white"), (cx+5,cy*2+5))
-
-
-#draws boxes
-#primitive side
-pygame.draw.rect(screen, "grey15", (cx,cy*4,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx,cy*4,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*4+5))
-
-pygame.draw.rect(screen, "grey15", (cx,cy*5,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx,cy*5,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*5+5))
-
-pygame.draw.rect(screen, "grey15", (cx,cy*6,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx,cy*6,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*6+5))
-
-pygame.draw.rect(screen, "grey15", (cx,cy*7,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx,cy*7,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*7+5))
-
-#advanced side
-pygame.draw.rect(screen, "grey15", (cx*6,cy*4,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx*6,cy*4,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*4+5))
-
-pygame.draw.rect(screen, "grey15", (cx*6,cy*5,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx*6,cy*5,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*5+5))
-
-pygame.draw.rect(screen, "grey15", (cx*6,cy*6,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx*6,cy*6,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*6+5))
-
-pygame.draw.rect(screen, "grey15", (cx*6,cy*7,cx*4,cy))
-pygame.draw.rect(screen, "grey8", (cx*6,cy*7,cx*4,cy), 5)
-screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*7+5))
-
-pygame.display.flip()
-running = True
-while running:
-    #TIMERS STUFF
-    clock.tick(SPEED)
-    x = 0
-    y = 0
-    for event in pygame.event.get():
-        #redundant quit program
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            pos = event.pos
-            x = pos[0]
-            y = pos[1]
-    
-    #long if loops to find which box was clicked...
-
-    if (cx<x) and (x<cx*5):
-        track.game_map(track.locs,track.locs_length) # all primitive maps need track.locs already defined
-        for i in range(4):
-            if (cy*(i+4)<y) and (y<cy*(i+5)):
-                if i == 0:
-                    print("you clicked pbox1!")
-                    track.game_map(track.locs,track.locs_length)
-                    running = False
-                elif i == 1:
-                    print("you clicked pbox2!")
-                    running = False
-                elif i == 2:
-                    print("you clicked pbox3!")
-                    running = False
-                elif i == 3:
-                    print("you clicked pbox4!")
-                    running = False
-    elif (cx<x*6) and (x<cx*10):
-        for i in range(4):
-            # all advanced maps create their own track.locs
-            if (cy*(i+4)<y) and (y<cy*(i+5)):
-                if i == 0:
-                    track.game_map_a()
-                    print("you clicked abox1!")
-                    running = False
-                elif i == 1:
-                    print("you clicked abox2!")
-                    running = False
-                elif i == 2:
-                    print("you clicked abox3!")
-                    running = False
-                elif i == 3:
-                    print("you clicked abox4!")
-                    running = False
+    #welcome box
+    pygame.draw.rect(screen, "grey15", (cx,cy, cx*9,cy*2))
+    pygame.draw.rect(screen, "grey8", (cx,cy, cx*9,cy*2),5)
+    screen.blit(FONT.render(" RACER GAME XTREEME!!!! ", True, "white"), (cx+5 ,cy+5))
+    screen.blit(FONT.render(" chose a map to start ", True, "white"), (cx+5,cy*2+5))
 
 
+    #draws boxes
+    #primitive side
+    pygame.draw.rect(screen, "grey15", (cx,cy*4,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*4,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*4+5))
 
+    pygame.draw.rect(screen, "grey15", (cx,cy*5,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*5,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*5+5))
 
+    pygame.draw.rect(screen, "grey15", (cx,cy*6,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*6,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*6+5))
 
+    pygame.draw.rect(screen, "grey15", (cx,cy*7,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*7,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*7+5))
 
+    #advanced side
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*4,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*4,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*4+5))
 
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*5,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*5,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*5+5))
+
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*6,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*6,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*6+5))
+
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*7,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*7,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*7+5))
+
+    pygame.display.flip()
+    running = True
+    while running:
+        #TIMERS STUFF
+        clock.tick(SPEED)
+        x = 0
+        y = 0
+        for event in pygame.event.get():
+            #redundant quit program
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                x = pos[0]
+                y = pos[1]
         
+        #long if loops to find which box was clicked...
+
+        if (cx<x) and (x<cx*5):
+            track.game_map(track.locs,track.locs_length) # all primitive maps need track.locs already defined
+            for i in range(4):
+                if (cy*(i+4)<y) and (y<cy*(i+5)):
+                    if i == 0:
+                        print("you clicked pbox1!")
+                        track.game_map(track.locs,track.locs_length)
+                        running = False
+                    elif i == 1:
+                        print("you clicked pbox2!")
+                        running = False
+                    elif i == 2:
+                        print("you clicked pbox3!")
+                        running = False
+                    elif i == 3:
+                        print("you clicked pbox4!")
+                        running = False
+        elif (cx<x*6) and (x<cx*10):
+            for i in range(4):
+                # all advanced maps create their own track.locs
+                if (cy*(i+4)<y) and (y<cy*(i+5)):
+                    if i == 0:
+                        track.game_map_a()
+                        print("you clicked abox1!")
+                        running = False
+                    elif i == 1:
+                        print("you clicked abox2!")
+                        running = False
+                    elif i == 2:
+                        print("you clicked abox3!")
+                        running = False
+                    elif i == 3:
+                        print("you clicked abox4!")
+                        running = False
+
 
 """
 MAIN GAME LOOP --------------------------------------------------------------------------------------------------
@@ -326,8 +326,8 @@ while running:
     
     #centers car
     if keys[pygame.K_SPACE]:
-        track.mapx = WIDTH/2
-        track.mapy = HEIGHT/2
+        track.mapx = track.start_square[0]
+        track.mapy = track.start_square[1]
         track.direction = track.starting_direction
         track.speed = 0
 
@@ -374,7 +374,7 @@ while running:
     
     #TRACK
 
-
+    
     #position:
     for i in range(track.locs_length):
         adjusted_loc = (track.locs[i][0] - COLS//2)*SQUARE_SIZE + WIDTH/2, (track.locs[i][1] - COLS//2)*SQUARE_SIZE + HEIGHT/2
