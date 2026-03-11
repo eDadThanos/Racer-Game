@@ -1,3 +1,10 @@
+"""
+Move car down to the bottom of the screen so users can see more of the map!!!
+Timer starts when key is hit
+Cant leave track
+start and finish
+"""
+
 
 """
 IMPORTS --------------------------------------------------------------------------------------------------
@@ -45,6 +52,29 @@ for i in range (1):
     pygame.font.init()
     FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/17))
     SMALL_FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/26))
+    TFONT = pygame.font.SysFont("Calibri", int(HEIGHT/17))
+
+"""
+FUNCTIONS --------------------------------------------------------------------------------------------------
+"""
+#DISPLAYS
+def displayTimer(time):
+    time = str(time)
+    if len(time) < 4:
+        text = str(0) + ":" + time
+        if len(time) < 3:
+            text = str(0)+ ":" + str(0) + time
+    else:
+        text = time[0] + ":" + time[1:]
+    cx = WIDTH/11
+    cy = HEIGHT/11
+    pygame.draw.rect(screen, "grey25", (cx*8,0, cx*3,cy*1.5))
+    pygame.draw.rect(screen, "white", (cx*8,0, cx*3,cy*1.5),5)
+    screen.blit(TFONT.render(text, True, "white"), (cx*8+15 ,15))
+
+
+
+
 
 """
 CLASS CAR --------------------------------------------------------------------------------------------------
@@ -84,6 +114,12 @@ class Track:
     start_square = (0,0) # will use later to determine starting square of maps
     starting_direction = 270
     mapx, mapy = WIDTH/2, HEIGHT/2 # Where should the center of the board be?
+    primitive = True # type of game map 
+    """
+    Differences between primitive and advanced maps: 
+    Primitives are just for prototyping and carry points
+    Advanced maps carry locations for the edge of the track
+    """
 
     def game_map(self,locs,length):
         for i in range(ROWS):
@@ -121,10 +157,6 @@ class Track:
     def game_map_a(self):
         #readable locs
         locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]]
-        #displayable locs
-        for i in range(track.locs_length):
-            track.locs[i][0] = track.locs[i][0]*SQUARE_SIZE
-            track.locs[i][1] = track.locs[i][1]*SQUARE_SIZE
         length = 16
         start_square = (1*SQUARE_SIZE,1*SQUARE_SIZE)
         #return key but simplified
@@ -132,6 +164,15 @@ class Track:
         track.locs_length = length
         track.start_square = start_square
 
+    def game_map_b(self):
+        #readable locs
+        locs =[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11]]
+        length = 12
+        start_square = (1*SQUARE_SIZE,1*SQUARE_SIZE)
+        #return key but simplified
+        track.locs = locs
+        track.locs_length = length
+        track.start_square = start_square
 
     #add more later
 
@@ -140,7 +181,7 @@ class Track:
     """
 
     #completed squrare: # just gotta add an arctan somewhere of 
-    def locate_point(self, posx, posy, mapx, mapy, rad, color): 
+    def locate_point(self, posx, posy, mapx, mapy, rad): 
         
         posx -= mapx
         posy -= mapy
@@ -158,11 +199,13 @@ class Track:
         center = (rx + (WIDTH / 2), ry + (HEIGHT / 2))
 
         #checks if point will actually load before displaying point
-        if (center[0] < WIDTH+car.size) and (center[1] < HEIGHT+car.size) and (center[0] > 0-car.size) and (center[0] > 0-car.size):
-            self.draw_point(center, color)
+        if track.primitive:
+            if (center[0] < WIDTH+car.size) and (center[1] < HEIGHT+car.size) and (center[0] > 0-car.size) and (center[0] > 0-car.size):
+                self.draw_point(center, "red")
+        else:
+            return center
     
     def draw_point(self, center, color):
-        
         #point
         pygame.draw.circle(screen, color, (center[0], center[1]), car.size)
 
@@ -182,6 +225,11 @@ class Track:
 
         #draws...
         pygame.draw.polygon(screen, color, (topRight, topLeft, bottomLeft, bottomRight))
+
+    def draw_track(self, points, color):
+        pygame.draw.polygon(screen, color, points)
+        pygame.draw.polygon(screen, "white", points, 5)
+
 
     def laser(self, rad):
         for i in range (25):
@@ -282,6 +330,7 @@ for i in range (1):
                         print("you clicked pbox4!")
                         running = False
         elif (cx<x*6) and (x<cx*10):
+            track.primitive = False
             for i in range(4):
                 # all advanced maps create their own track.locs
                 if (cy*(i+4)<y) and (y<cy*(i+5)):
@@ -306,12 +355,13 @@ MAIN GAME LOOP -----------------------------------------------------------------
 
 track.direction = track.starting_direction
 running = True
+base_time = 0
 
 while running:
     
     #TIMERS STUFF
     clock.tick(SPEED)
-    seconds = (pygame.time.get_ticks() - start_ticks) // 1000
+    milliseconds = (pygame.time.get_ticks() - start_ticks - base_time)
 
 
     screen.fill((0, 0, 0))
@@ -331,6 +381,7 @@ while running:
         track.mapy = track.start_square[1]
         track.direction = track.starting_direction
         track.speed = 0
+        base_time = pygame.time.get_ticks()
 
     #changes direction
     if keys[pygame.K_LEFT]:
@@ -375,12 +426,30 @@ while running:
     
     #TRACK
 
-    
     #position:
-    for i in range(track.locs_length):
-        adjusted_loc = (track.locs[i][0] - COLS//2)*SQUARE_SIZE + WIDTH/2, (track.locs[i][1] - COLS//2)*SQUARE_SIZE + HEIGHT/2
-        track.locate_point(adjusted_loc[0],adjusted_loc[1], track.mapx, track.mapy, rad, "red")
+    if track.primitive:
+        for i in range(track.locs_length):
+            #draws point at adjusted location of located point
+            adjusted_loc = (track.locs[i][0] - COLS//2)*SQUARE_SIZE + WIDTH/2, (track.locs[i][1] - COLS//2)*SQUARE_SIZE + HEIGHT/2
+            track.locate_point(adjusted_loc[0],adjusted_loc[1], track.mapx, track.mapy, rad)
+    else:
+        #stores position of adjusted points
+        points = []
+
+        #finds locations of the map
+        for i in range(track.locs_length):
+            adjusted_loc = (track.locs[i][0])*SQUARE_SIZE, (track.locs[i][1])*SQUARE_SIZE
+            points.append(track.locate_point(adjusted_loc[0],adjusted_loc[1], track.mapx, track.mapy, rad))
+        #draws points
+        for i in range(track.locs_length):
+            track.draw_point(points[i],"white")
+            #draws line
+        track.draw_track(points, "grey25")
+
     track.laser(rad)
     pygame.draw.circle(screen, "white", (WIDTH/2, HEIGHT/2), car.size)
+
+    #displays time
+    displayTimer(milliseconds)
     
     pygame.display.flip()
