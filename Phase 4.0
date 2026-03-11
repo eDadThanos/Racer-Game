@@ -1,1 +1,386 @@
 
+"""
+IMPORTS --------------------------------------------------------------------------------------------------
+"""
+from turtle import speed
+
+for i in range (1):
+    import sys, pygame
+    import random
+    import os
+    import math
+    os.environ['SDL_AUDIODRIVER'] = 'dsp'
+print("Game loading...")
+
+"""
+CONSTANTS AND VARIABLES --------------------------------------------------------------------------------
+"""
+for i in range (1):
+    # INITIALIZE PYGAME
+    pygame.init()
+    clock = pygame.time.Clock()
+    SPEED = 60
+    clock.tick(SPEED)
+    
+    # SIZES
+    WIDTH, HEIGHT = 800, 800
+    ROWS, COLS = 100, 100
+    SQUARE_SIZE = 100
+    
+    #COLORS
+    LIGHT = "grey35"
+    DARK = "grey15"
+    
+    #CONSTANTS
+    STREET = 1
+    HOUSE = 0
+    
+    #GAME BOARD
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    #TIMERS
+    start_ticks = pygame.time.get_ticks() 
+
+    #FONTS
+    pygame.font.init()
+    FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/17))
+    SMALL_FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/26))
+
+"""
+CLASS CAR --------------------------------------------------------------------------------------------------
+"""
+class Car: # doesn't do much but sit in the center of the screen. Will replace with an image later
+
+    #variables specific to car object:
+    size = 10
+    
+car = Car()
+
+"""
+CLASS TRACK -------------------------------------------------------------------------------------------------
+"""
+
+class Track:
+
+    """
+    VARIABLES ------------------------------------------------
+    """
+    #Movement Constants:
+    speed = 0 # to alter speed and acc movements go to main game loop
+    acc = 0 # see above
+    direction = 0 # stored in degrees
+
+    turn_radius = 3 # constant
+    friction = 0.1 # constant
+    maxspeed = SQUARE_SIZE*2 #pixels/second
+    minacc = .25 #minimum acceleration
+
+    """
+    GAME BOARD ------------------------------------------------
+    """
+    #Game board defualts
+    locs = []
+    locs_length = 0
+    start_square = (0,0) # will use later to determine starting square of maps
+    starting_direction = 270
+    mapx, mapy = WIDTH/2, HEIGHT/2 # Where should the center of the board be?
+
+    def game_map(self,locs,length):
+        for i in range(ROWS):
+            for j in range(COLS):
+                locs.append([i,j])
+                length += 1
+                # print("(" + str(i) + "," + str(j) + ")")
+        start_square = (ROWS//2, COLS//2)
+        #return key but simplified
+        track.locs = locs
+        track.locs_length = length
+        track.start_square = start_square
+
+    
+    """
+    GAME MAP STORAGE -----------------------------------------
+    """
+    # MIN COLS, ROWS: 50, 50
+    # primitive
+    def game_map_1(self, locs, length):
+        start_square = (50, 0)
+        for i in range (50):
+            locs.remove([50, i])
+            length -= 1
+            locs.remove([i, 50])
+            length -= 1
+        locs.remove([50,50])
+        length -= 1
+        #return key but simplified
+        track.locs = locs
+        track.locs_length = length
+        track.start_square = start_square
+    
+    # advanced 
+    def game_map_a(self):
+        #readable locs
+        locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]]
+        #displayable locs
+        for i in range(track.locs_length):
+            track.locs[i][0] = track.locs[i][0]*SQUARE_SIZE
+            track.locs[i][1] = track.locs[i][1]*SQUARE_SIZE
+        length = 16
+        start_square = (1*SQUARE_SIZE,1*SQUARE_SIZE)
+        #return key but simplified
+        track.locs = locs
+        track.locs_length = length
+        track.start_square = start_square
+
+
+    #add more later
+
+    """
+    FUNCTIONS -------------------------------------------------
+    """
+
+    #completed squrare: # just gotta add an arctan somewhere of 
+    def locate_point(self, posx, posy, mapx, mapy, rad, color): 
+        
+        posx -= mapx
+        posy -= mapy
+
+        #keep car moving "up"
+        pi = math.pi
+
+        rad = math.radians((track.starting_direction-math.degrees(rad))%360)-pi
+
+        #rotation matix
+        rx = (posx * math.cos((rad)) - (posy * math.sin(rad)))
+        ry = (posx * math.sin((rad)) + (posy * math.cos(rad)))
+
+        #moves back to center
+        center = (rx + (WIDTH / 2), ry + (HEIGHT / 2))
+
+        #checks if point will actually load before displaying point
+        if (center[0] < WIDTH+car.size) and (center[1] < HEIGHT+car.size) and (center[0] > 0-car.size) and (center[0] > 0-car.size):
+            self.draw_point(center, color)
+    
+    def draw_point(self, center, color):
+        
+        #point
+        pygame.draw.circle(screen, color, (center[0], center[1]), car.size)
+
+    def draw_square(self, center, direction, size, color):
+        
+        #updates direction so that the squares will be "straight"
+        direction += 45
+
+        #corner
+        topRight = (center[0] + size*math.cos(rad), center[1] + size*math.sin(rad))
+        topLeft = (center[0] + size*math.cos(rad + 3*math.pi/2), center[1] + size*math.sin(rad + 3*math.pi/2))
+        bottomRight = (center[0] + size*math.cos(rad + math.pi/2), center[1] + size*math.sin(rad + math.pi/2))
+        bottomLeft = (center[0] + size*math.cos(rad + math.pi), center[1] + size*math.sin(rad + math.pi))
+        
+        #resets direction for car movement
+        direction -= 45
+
+        #draws...
+        pygame.draw.polygon(screen, color, (topRight, topLeft, bottomLeft, bottomRight))
+
+    def laser(self, rad):
+        for i in range (25):
+            pygame.draw.circle(screen, (255-i*10, 255-i*9, 255-i*10), (WIDTH//2,HEIGHT//2-5*i), car.size)
+
+
+    
+track = Track()
+
+
+"""
+INSTRUCTION/OPENING -----------------------------------------------------------------------------------------
+"""
+for i in range (1):
+    # Display to chose Game Map
+    pygame.draw.rect(screen, "grey41", (0,0,WIDTH,HEIGHT))
+
+    #chunck size and box size   
+    cx = WIDTH/11
+    cy = HEIGHT/11
+    bsize = (cx*4,cy*2)
+
+    #welcome box
+    pygame.draw.rect(screen, "grey15", (cx,cy, cx*9,cy*2))
+    pygame.draw.rect(screen, "grey8", (cx,cy, cx*9,cy*2),5)
+    screen.blit(FONT.render(" RACER GAME XTREEME!!!! ", True, "white"), (cx+5 ,cy+5))
+    screen.blit(FONT.render(" chose a map to start ", True, "white"), (cx+5,cy*2+5))
+
+
+    #draws boxes
+    #primitive side
+    pygame.draw.rect(screen, "grey15", (cx,cy*4,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*4,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*4+5))
+
+    pygame.draw.rect(screen, "grey15", (cx,cy*5,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*5,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*5+5))
+
+    pygame.draw.rect(screen, "grey15", (cx,cy*6,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*6,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*6+5))
+
+    pygame.draw.rect(screen, "grey15", (cx,cy*7,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx,cy*7,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx+5,cy*7+5))
+
+    #advanced side
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*4,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*4,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*4+5))
+
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*5,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*5,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*5+5))
+
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*6,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*6,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*6+5))
+
+    pygame.draw.rect(screen, "grey15", (cx*6,cy*7,cx*4,cy))
+    pygame.draw.rect(screen, "grey8", (cx*6,cy*7,cx*4,cy), 5)
+    screen.blit(SMALL_FONT.render("filler text", True, "white"), (cx*6+5,cy*7+5))
+
+    pygame.display.flip()
+    running = True
+    while running:
+        #TIMERS STUFF
+        clock.tick(SPEED)
+        x = 0
+        y = 0
+        for event in pygame.event.get():
+            #redundant quit program
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                x = pos[0]
+                y = pos[1]
+        
+        #long if loops to find which box was clicked...
+
+        if (cx<x) and (x<cx*5):
+            track.game_map(track.locs,track.locs_length) # all primitive maps need track.locs already defined
+            for i in range(4):
+                if (cy*(i+4)<y) and (y<cy*(i+5)):
+                    if i == 0:
+                        print("you clicked pbox1!")
+                        track.game_map(track.locs,track.locs_length)
+                        running = False
+                    elif i == 1:
+                        print("you clicked pbox2!")
+                        running = False
+                    elif i == 2:
+                        print("you clicked pbox3!")
+                        running = False
+                    elif i == 3:
+                        print("you clicked pbox4!")
+                        running = False
+        elif (cx<x*6) and (x<cx*10):
+            for i in range(4):
+                # all advanced maps create their own track.locs
+                if (cy*(i+4)<y) and (y<cy*(i+5)):
+                    if i == 0:
+                        track.game_map_a()
+                        print("you clicked abox1!")
+                        running = False
+                    elif i == 1:
+                        print("you clicked abox2!")
+                        running = False
+                    elif i == 2:
+                        print("you clicked abox3!")
+                        running = False
+                    elif i == 3:
+                        print("you clicked abox4!")
+                        running = False
+
+
+"""
+MAIN GAME LOOP --------------------------------------------------------------------------------------------------
+"""
+
+track.direction = track.starting_direction
+running = True
+
+while running:
+    
+    #TIMERS STUFF
+    clock.tick(SPEED)
+    seconds = (pygame.time.get_ticks() - start_ticks) // 1000
+
+
+    screen.fill((0, 0, 0))
+    
+    #Events
+    for event in pygame.event.get():
+        #redundant quit program
+        if event.type == pygame.QUIT:
+            running = False
+
+    #MOVEMENT
+    keys = pygame.key.get_pressed()
+    
+    #centers car
+    if keys[pygame.K_SPACE]:
+        track.mapx = track.start_square[0]
+        track.mapy = track.start_square[1]
+        track.direction = track.starting_direction
+        track.speed = 0
+
+    #changes direction
+    if keys[pygame.K_LEFT]:
+        #GOAL: car will travel in a circle if holding left
+        track.direction = (track.direction - track.turn_radius) % 360
+
+    if keys[pygame.K_RIGHT]:
+        #GOAL: car will travel in a circle if holding right
+        track.direction = (track.direction + track.turn_radius) % 360
+
+
+    #changes speed
+    track.acc = 1 - (abs(track.speed)/track.maxspeed)
+
+    if keys[pygame.K_UP]:
+        track.speed -= track.minacc * track.acc
+    if keys[pygame.K_DOWN]:
+        track.speed += track.minacc * track.acc
+
+    #friction
+    if track.speed > 0:
+        if track.speed - track.friction > 0:
+            track.speed = track.speed - track.friction
+        else:
+            track.speed = 0
+    elif track.speed < 0:
+        if track.speed - track.friction < 0:
+            track.speed = track.speed + track.friction
+        else:
+            track.speed = 0
+    
+    #converts direction to radians for operations
+    
+
+    #moves car
+    rad = math.radians(track.direction)
+
+    track.mapx += track.speed * (math.cos(rad))
+    track.mapy += track.speed * (math.sin(rad))
+    
+
+    
+    #TRACK
+
+    
+    #position:
+    for i in range(track.locs_length):
+        adjusted_loc = (track.locs[i][0] - COLS//2)*SQUARE_SIZE + WIDTH/2, (track.locs[i][1] - COLS//2)*SQUARE_SIZE + HEIGHT/2
+        track.locate_point(adjusted_loc[0],adjusted_loc[1], track.mapx, track.mapy, rad, "red")
+    track.laser(rad)
+    pygame.draw.circle(screen, "white", (WIDTH/2, HEIGHT/2), car.size)
+    
+    pygame.display.flip()
