@@ -1,7 +1,7 @@
 """
-Fix timer
-Cant leave track
-Start and finish
+Add stuff after map is completed
+Finish collision math
+
 """
 
 
@@ -109,29 +109,33 @@ class Track:
     """
     GAME BOARD ------------------------------------------------
     """
-    #Game board defualts
+    #Game board
     locs = []
-    locs_length = 0
+    locs_outer = []
+    locs_inner = []
+    #Game board Starts
     start_square = (0,0) # will use later to determine starting square of maps
     starting_direction = 270
+    locs_start = []
+    locs_finish = []
+
     mapx, mapy = WIDTH/2, HEIGHT/2 # Where should the center of the board be?
     primitive = True # type of game map 
     """
     Differences between primitive and advanced maps: 
     Primitives are just for prototyping and carry points
     Advanced maps carry locations for the edge of the track
+    Important : advanced locs are anti parrellel: One must be read start to finish and the other finish to start.
     """
 
-    def game_map(self,locs,length):
+    def game_map(self,locs):
         for i in range(ROWS):
             for j in range(COLS):
                 locs.append([i,j])
-                length += 1
                 # print("(" + str(i) + "," + str(j) + ")")
         start_square = (ROWS//2, COLS//2)
         #return key but simplified
         track.locs = locs
-        track.locs_length = length
         track.start_square = start_square
 
     
@@ -140,40 +144,36 @@ class Track:
     """
     # MIN COLS, ROWS: 50, 50
     # primitive
-    def game_map_1(self, locs, length):
+    def game_map_1(self, locs):
         start_square = (50, 0)
         for i in range (50):
             locs.remove([50, i])
-            length -= 1
             locs.remove([i, 50])
-            length -= 1
         locs.remove([50,50])
-        length -= 1
         #return key but simplified
         track.locs = locs
-        track.locs_length = length
         track.start_square = start_square
     
     # advanced 
     def game_map_a(self):
         #readable locs
-        locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]]
-        length = 16
-        start_square = (1*SQUARE_SIZE,1*SQUARE_SIZE)
-        #return key but simplified
-        track.locs = locs
-        track.locs_length = length
-        track.start_square = start_square
+        locs_outer = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0]] # outer locs -> read start to finish
+        locs_inner = [[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]] # inner locs - > read finish to start
+        locs = locs_outer + locs_inner
 
-    def game_map_b(self):
-        #readable locs
-        locs =[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[0,10],[0,11]]
-        length = 12
-        start_square = (1*SQUARE_SIZE,1*SQUARE_SIZE)
+        #start and finish
+        start_square = (1*SQUARE_SIZE,0.5*SQUARE_SIZE)
+        locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]] # remember -> anti parallel
+        locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]] # see above
+
+
         #return key but simplified
         track.locs = locs
-        track.locs_length = length
+        track.locs_outer = locs_outer
+        track.locs_inner = locs_inner 
         track.start_square = start_square
+        track.locs_start = locs_start
+        track.locs_finish = locs_finish
 
     #add more later
 
@@ -236,8 +236,22 @@ class Track:
         for i in range (25):
             pygame.draw.circle(screen, (255-i*10, 255-i*9, 255-i*10), (track.rotation_point[0],track.rotation_point[1]-5*i), car.size)
 
-    def bounds(self, tlocs, mapx, mapy):
-        return True
+    def bounds(self, poly, x, y):
+        #source code for ray casting algorithm from online
+        n = len(poly)
+        inside = False
+        p1x, p1y = poly[0]
+        for i in range(n + 1):
+            p2x, p2y = poly[i % n]
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xints:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+        return inside
 
     
 track = Track()
@@ -317,12 +331,12 @@ for i in range (1):
         #long if loops to find which box was clicked...
 
         if (cx<x) and (x<cx*5):
-            track.game_map(track.locs,track.locs_length) # all primitive maps need track.locs already defined
+            track.game_map(track.locs) # all primitive maps need track.locs already defined
             for i in range(4):
                 if (cy*(i+4)<y) and (y<cy*(i+5)):
                     if i == 0:
                         print("you clicked pbox1!")
-                        track.game_map(track.locs,track.locs_length)
+                        track.game_map(track.locs)
                         running = False
                     elif i == 1:
                         print("you clicked pbox2!")
@@ -358,6 +372,9 @@ MAIN GAME LOOP -----------------------------------------------------------------
 """
 
 track.direction = track.starting_direction
+track.mapx = track.start_square[0]
+track.mapy = track.start_square[1]
+
 running = True
 base_time = 0
 
@@ -437,31 +454,46 @@ while running:
 
     #position:
     if track.primitive:
-        for i in range(track.locs_length):
+        for i in range(len(track.locs)):
             #draws point at adjusted location of located point
             adjusted_loc = (track.locs[i][0] - COLS//2)*SQUARE_SIZE + WIDTH/2, (track.locs[i][1] - COLS//2)*SQUARE_SIZE + HEIGHT/2
             track.locate_point(adjusted_loc[0],adjusted_loc[1], track.mapx, track.mapy, rad)
     else:
         #stores position of translated locs
         tlocs = []
-
-        #finds locations of the map
-        for i in range(track.locs_length):
+        tlocs_start = []
+        tlocs_finish = []
+        
+        #finds locations of track
+        for i in range(len(track.locs)):
             adjusted_loc = (track.locs[i][0])*SQUARE_SIZE, (track.locs[i][1])*SQUARE_SIZE
-            tlocs.append(track.locate_point(adjusted_loc[0],adjusted_loc[1], track.mapx, track.mapy, rad))
+            tlocs.append(track.locate_point(adjusted_loc[0], adjusted_loc[1], track.mapx, track.mapy, rad))
+        #start line
+        for i in range (len(track.locs_start)):
+            adjusted_loc = (track.locs_start[i][0])*SQUARE_SIZE, (track.locs_start[i][1])*SQUARE_SIZE
+            tlocs_start.append(track.locate_point(adjusted_loc[0], adjusted_loc[1], track.mapx, track.mapy, rad))
+        #finish line
+        for i in range (len(track.locs_finish)):
+            adjusted_loc = (track.locs_finish[i][0])*SQUARE_SIZE, (track.locs_finish[i][1])*SQUARE_SIZE
+            tlocs_finish.append(track.locate_point(adjusted_loc[0], adjusted_loc[1], track.mapx, track.mapy, rad))
+
         #draws points
-        for i in range(track.locs_length):
+        for i in range(len(tlocs)):
             track.draw_point(tlocs[i],"white")
             #draws line
         track.draw_track(tlocs, "grey25")
+        track.draw_track(tlocs_start, "yellow")
+        track.draw_track(tlocs_finish, "red")
 
         """
         CHECKS MOVEMENT
         """
-        if track.bounds(tlocs, track.mapx, track.mapy):
-            print("I'm on the track!")
-        else:
-            print("I'm off the track!")
+        
+
+        if not track.bounds(tlocs, track.rotation_point[0], track.rotation_point[1]):
+            track.speed = -track.speed
+        if track.bounds(tlocs_finish, track.rotation_point[0], track.rotation_point[1]):
+            running = False
 
     track.laser(rad) # replace with car image eventually
     pygame.draw.circle(screen, "white", track.rotation_point, car.size)
@@ -497,3 +529,7 @@ while running:
             if keys[pygame.K_LEFT] or keys[pygame.K_a] or keys[pygame.K_RIGHT] or keys[pygame.K_d] or keys[pygame.K_UP] or keys[pygame.K_w] or keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 base_time = pygame.time.get_ticks()
                 run_started = True
+"""
+POST COMPLETION of run:
+    *return to home screen, probobly
+"""
