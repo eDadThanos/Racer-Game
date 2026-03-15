@@ -1,8 +1,4 @@
-"""
-Add stuff after map is completed
-Finish collision math
-
-"""
+#FINISHED PROTOTYPE
 
 
 """
@@ -31,7 +27,7 @@ for i in range (1):
     # SIZES
     WIDTH, HEIGHT = 800, 800
     ROWS, COLS = 100, 100
-    SQUARE_SIZE = 250
+    SQUARE_SIZE = 75
     
     #COLORS
     LIGHT = "grey35"
@@ -52,26 +48,22 @@ for i in range (1):
     FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/17))
     SMALL_FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/26))
     TFONT = pygame.font.SysFont("Calibri", int(HEIGHT/17))
+    FFONT = pygame.font.SysFont("Calibri", int(WIDTH/6))
 
 """
 FUNCTIONS --------------------------------------------------------------------------------------------------
 """
 #DISPLAYS
 def displayTimer(time):
-    time = str(time)
-    if len(time) < 4:
-        text = str(0) + ":" + time
-        if len(time) < 3:
-            text = str(0)+ ":" + str(0) + time
-    else:
-        text = time[0] + ":" + time[1:]
+    text = str(time / 1000.0)
     cx = WIDTH/11
     cy = HEIGHT/11
-    pygame.draw.rect(screen, "grey25", (cx*8,0, cx*3,cy*1.5))
-    pygame.draw.rect(screen, "white", (cx*8,0, cx*3,cy*1.5),5)
+    pygame.draw.rect(screen, "grey25", (cx*8,0, cx*3,cy))
+    pygame.draw.rect(screen, "white", (cx*8,0, cx*3,cy),5)
     screen.blit(TFONT.render(text, True, "white"), (cx*8+15 ,15))
 
-
+def get_distance(x1, y1, x2, y2):
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
 
 
@@ -121,6 +113,22 @@ class Track:
 
     mapx, mapy = WIDTH/2, HEIGHT/2 # Where should the center of the board be?
     primitive = True # type of game map 
+
+    #Timers
+
+    def reset_map(self):
+        #Game board
+        self.locs = []
+        self.locs_outer = []
+        self.locs_inner = []
+        #Game board Starts
+        self.start_square = (0,0) # will use later to determine starting square of maps
+        self.starting_direction = 270
+        self.locs_start = []
+        self.locs_finish = []
+
+        self.mapx, self.mapy = WIDTH/2, HEIGHT/2 # Where should the center of the board be?
+        self.primitive = True # type of game map 
     """
     Differences between primitive and advanced maps: 
     Primitives are just for prototyping and carry points
@@ -129,6 +137,7 @@ class Track:
     """
 
     def game_map(self,locs):
+        self.reset_map()
         for i in range(ROWS):
             for j in range(COLS):
                 locs.append([i,j])
@@ -145,6 +154,7 @@ class Track:
     # MIN COLS, ROWS: 50, 50
     # primitive
     def game_map_1(self, locs):
+        self.reset_map()
         start_square = (50, 0)
         for i in range (50):
             locs.remove([50, i])
@@ -235,6 +245,12 @@ class Track:
     def laser(self, rad):
         for i in range (25):
             pygame.draw.circle(screen, (255-i*10, 255-i*9, 255-i*10), (track.rotation_point[0],track.rotation_point[1]-5*i), car.size)
+    
+    def restart(self):
+        self.mapx = self.start_square[0]
+        self.mapy = self.start_square[1]
+        self.direction = self.starting_direction
+        self.speed = 0
 
     def bounds(self, poly, x, y):
         #source code for ray casting algorithm from online
@@ -251,16 +267,53 @@ class Track:
                         if p1x == p2x or x <= xints:
                             inside = not inside
             p1x, p1y = p2x, p2y
-        return inside
 
+        return inside
     
+    def collision(self, poly, x, y):
+
+        y = (HEIGHT / 4 * 3)
+
+        #source code for reflection angle, also found online
+        for i in range(len(poly)):
+            p1 = poly[i]
+            p2 = poly[(i + 1) % len(poly)]
+            
+            "Edge angles"
+            edge_dx = p2[0] - p1[0]
+            edge_dy = p2[1] - p1[1]
+            edge_angle = math.atan2(edge_dy, edge_dx)
+            
+            "Calculates closest point to (x, y)"
+            t = ((x - p1[0]) * edge_dx + (y - p1[1]) * edge_dy) / (edge_dx**2 + edge_dy**2)
+            t = max(0, min(1, t))
+            
+            closest_x = p1[0] + t * edge_dx
+            closest_y = p1[1] + t * edge_dy
+            
+            dist = get_distance(x, y, closest_x, closest_y)
+
+            # if the car is close to the edge:
+            print(dist)
+            if dist < car.size:
+                normal_angle = edge_angle - math.pi / 2
+
+                "Reflection Angle"
+                self.direction = 2 * normal_angle - self.direction - math.pi
+
+                "Prevents Recurrent Jamming"
+                pygame.draw.circle(screen, "red", (closest_x, closest_y), 15)
+                self.mapx -= math.cos(edge_angle-math.pi/2) * car.size
+                self.mapy -= math.sin(edge_angle-math.pi/2) * car.size
+
 track = Track()
 
 
 """
 INSTRUCTION/OPENING -----------------------------------------------------------------------------------------
 """
-for i in range (1):
+
+def homescreen():
     # Display to chose Game Map
     pygame.draw.rect(screen, "grey41", (0,0,WIDTH,HEIGHT))
 
@@ -323,6 +376,8 @@ for i in range (1):
             #redundant quit program
             if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
                 running = False
+                
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
                 x = pos[0]
@@ -365,7 +420,7 @@ for i in range (1):
                     elif i == 3:
                         print("you clicked abox4!")
                         running = False
-
+homescreen()
 
 """
 MAIN GAME LOOP --------------------------------------------------------------------------------------------------
@@ -378,7 +433,8 @@ track.mapy = track.start_square[1]
 running = True
 base_time = 0
 
-run_started = False
+run_started = False # tracks wether user is attempting a run
+run_active = False # tracks whether TIMER is recording
 
 while running:
 
@@ -395,6 +451,13 @@ while running:
         #redundant quit program
         if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
             running = False
+        # go back to menu
+        if keys[pygame.K_m]:
+            homescreen()
+            screen.fill((0, 0, 0))
+            track.restart()
+            run_active = False
+            
 
 
     """
@@ -403,11 +466,8 @@ while running:
     
     #centers car
     if keys[pygame.K_SPACE] or keys[pygame.K_r]:
-        track.mapx = track.start_square[0]
-        track.mapy = track.start_square[1]
-        track.direction = track.starting_direction
-        track.speed = 0
-        run_started = False
+        track.restart()
+        run_active = False
 
     #changes direction
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -486,14 +546,44 @@ while running:
         track.draw_track(tlocs_finish, "red")
 
         """
-        CHECKS MOVEMENT
+        CHECKS MOVEMENT ---------------------------------------------------------------------------------------------
         """
         
+        # if exiting track: rebounds
+        if not track.bounds(tlocs, track.rotation_point[0], (HEIGHT / 4 * 3)):
+            track.speed = 0
+            pygame.draw.circle(screen, "red", (track.rotation_point), 15)
 
-        if not track.bounds(tlocs, track.rotation_point[0], track.rotation_point[1]):
-            track.speed = -track.speed
+        # when car hits finish line, 
         if track.bounds(tlocs_finish, track.rotation_point[0], track.rotation_point[1]):
-            running = False
+            for i in range(100):
+                screen.fill((0, 0, 0))
+                clock.tick(SPEED)
+                pygame.draw.rect(screen, "grey15", (i*WIDTH/100 - WIDTH, HEIGHT/3, WIDTH, HEIGHT/3))
+                pygame.draw.rect(screen, "white", (i*WIDTH/100 - WIDTH, HEIGHT/3, WIDTH, HEIGHT/3),5)
+                screen.blit(FFONT.render("FINISH! " + str(milliseconds / 1000.0), True, "white"), (i*WIDTH/100 + 15 - WIDTH, HEIGHT/3 + 15))
+                pygame.display.flip()
+            something = True
+            while something:
+                keys = pygame.key.get_pressed()
+                for event in pygame.event.get():
+                    #redundant quit program
+                    if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
+                        running = False
+                        something = False
+                    # go back to menu
+                    if keys[pygame.K_m]:
+                        something = False
+                        homescreen()
+                        track.restart()
+                        run_active = False
+                if keys[pygame.K_r] or keys[pygame.K_SPACE]:
+                    something = False
+                    track.restart()
+                    run_active = False
+            
+
+
 
     track.laser(rad) # replace with car image eventually
     pygame.draw.circle(screen, "white", track.rotation_point, car.size)
@@ -509,27 +599,23 @@ while running:
     "ALTER STUFF AFTER DISPLAYS"
 
     # Prevents timer from starting until key is pressed
-    if not run_started:
+    if not run_active:
 
         #updates timer to 0.000 for asethetics
         cx = WIDTH/11
         cy = HEIGHT/11
-        pygame.draw.rect(screen, "grey25", (cx*8,0, cx*3,cy*1.5))
-        pygame.draw.rect(screen, "white", (cx*8,0, cx*3,cy*1.5),5)
+        pygame.draw.rect(screen, "grey25", (cx*8,0, cx*3,cy))
+        pygame.draw.rect(screen, "white", (cx*8,0, cx*3,cy),5)
         screen.blit(TFONT.render("0.000", True, "white"), (cx*8+15 ,15))
         pygame.display.flip()
 
-        while not run_started:
+        while not run_active:
             keys = pygame.key.get_pressed()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
-                    run_started = True
+                    run_active = True
                     running = False
 
             if keys[pygame.K_LEFT] or keys[pygame.K_a] or keys[pygame.K_RIGHT] or keys[pygame.K_d] or keys[pygame.K_UP] or keys[pygame.K_w] or keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 base_time = pygame.time.get_ticks()
-                run_started = True
-"""
-POST COMPLETION of run:
-    *return to home screen, probobly
-"""
+                run_active = True
