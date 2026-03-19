@@ -1,152 +1,136 @@
-from turtle import speed
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            RACER GAME
+        </title>
+    </head>
+    <body>
+        <canvas id="canvas" width = "800" height="600"></canvas>
+        <script>
+            //CANVAS DISPLAY ----------------------------------------------
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
 
-for i in range (1):
-    import sys, pygame
-    import random
-    import os
-    import math
-    os.environ['SDL_AUDIODRIVER'] = 'dsp'
-print("Game loading...")
+            // Sizes
+            const WIDTH = 800
+            const HEIGHT = 400
+            const SCALE = 75 //new variable name for SQUARE_SIZE
 
-"""
-CONSTANTS AND VARIABLES --------------------------------------------------------------------------------
-"""
-for i in range (1):
-    # INITIALIZE PYGAME
-    pygame.init()
-    clock = pygame.time.Clock()
-    SPEED = 60
-    clock.tick(SPEED)
-    
-    # SIZES
-    WIDTH, HEIGHT = 400, 400
-    ROWS, COLS = 100, 100
-    SQUARE_SIZE = 30
-    
-    #COLORS
-    LIGHT = "grey35"
-    DARK = "grey15"
-    
-    #CONSTANTS
-    STREET = 1
-    HOUSE = 0
-    
-    #GAME BOARD
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
-    #TIMERS
-    start_ticks = pygame.time.get_ticks() 
-
-    #FONTS
-    pygame.font.init()
-    FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/17))
-    SMALL_FONT = pygame.font.SysFont("Helvetica", int(HEIGHT/26))
-    TFONT = pygame.font.SysFont("Calibri", int(HEIGHT/17))
-
-for i in range (1):
-    """
-    locs_outer = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0]] # outer locs
-    locs_inner = [[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]] # inner locs
-    """
-    locs_outer = [[0,0],[10,10]] # outer locs
-    locs_inner = [[11,10],[1,0]] # inner locs
-
-    
-    for i in range (len(locs_outer)):
-        locs_outer[i][0] = locs_outer[i][0]*SQUARE_SIZE
-        locs_outer[i][1] = locs_outer[i][1]*SQUARE_SIZE
-    for i in range (len(locs_inner)):
-        locs_inner[i][0] = locs_inner[i][0]*SQUARE_SIZE
-        locs_inner[i][1] = locs_inner[i][1]*SQUARE_SIZE
-
-    locs = locs_outer + locs_inner
-    
-    pygame.draw.polygon(screen, "white", locs, 5)
-    pygame.draw.polygon(screen, "grey", locs)
-    pygame.display.flip()
-
-def bounds(outer, inner, x, y):
-    maxy = outer[0]
-    miny = inner[0]
-    
-    #TO DO: Find which locs to check on which range
-
-    #STIll need to make sure program runs smoothly and can check multiple x spots. Maybe clarify with y spots?
-    rangeo = []
-    rangei = []
-    for i in range(len(outer)):
-        if i < len(outer)-1:
-            if (outer[i][0] <= x) and (x < outer[i+1][0]):
-                rangeo.append(i)
-    for i in range(len(inner)):
-        if i < len(inner)-1:
-            if (inner[i][0] <= x) and (x < inner[i+1][0]):
-                rangei.append(i)
-
-    for i in range(len(rangeo)):
-        x1 = outer[i][0]
-        x2 = outer[i+1][0]
-        y1 = outer[i][1]
-        y2 = outer[i+1][1]
-        
-        m = (y1-y2)/(x1-x2)
-        b = y1 - m*x1
-        maxy = m*x+b # max y value for x value
-    for i in range(len(rangei)):
-        x1 = inner[i][0]
-        x2 = inner[i+1][0]
-        y1 = inner[i][1]
-        y2 = inner[i+1][1]
-        
-        m = (y1-y2)/(x1-x2)
-        b = y1 - m*x1
-        miny = m*x+b # min y value for x value
-
-    if (miny < y) and (y < maxy):
-        return True
-    elif (maxy < y) and (y < miny):
-        return True
-    else:
-        return False
-
-    
-    
-    
+            // Fonts
 
 
-
-
-
-
-
-running = True
-
-while running:
-    # Limit to 60 frames per second
-    clock.tick(60)
-    #quit system
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN: 
-            pos = event.pos
-            x = pos[0]
-            y = pos[1]
-
-            if bounds(locs_outer, locs_inner, x, y):
-                print("on the tracK!")
-            else:
-                print("off the track!")
             
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    pygame.display.flip()
+            // TRACK VARIABLE ----------------------------------------------------------------
+            var Track = {
+
+                //movement:
+                speed: 0,
+                acc: 0,
+                direction: 0,
+                //movement constants
+                rotation_point: ((WIDTH/2),(HEIGHT/4*3)),
+                turn_radius: 3,
+                friction: 0.1,
+                maxspeed: SCALE*2,
+                minacc: .25,
+
+                // GAME BOARD --------------------------
+                locs: [],
+                locs_outer: [],
+                locs_inner: [],
+                //game board constants
+                start_square: (0,0),
+                starting_direction: 270,
+                locs_start: [],
+                locs_finish: [],
+
+                mapx: WIDTH/2,
+                mapy: HEIGHT/2,
+
+                //game board storage: might import later
+                game_map_a: function(){
+                    this.locs_outer = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0]] // outer locs -> read start to finish
+                    this.locs_inner = [[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]] // inner locs - > read finish to start
+                    this.locs = this.locs_outer + lthis.ocs_inner
+
+                    //start and finish
+                    this.start_square = (1*SQUARE_SIZE,0.5*SQUARE_SIZE)
+                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]] // remember -> anti parallel
+                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]] // see above
+                },
+
+                // FUNCTIONS
+                locate_point: function(posx, posy, mapx, mapy, rad) {
+                    posx -= mapx;
+                    posy -= mapy;
+                    let pi = Math.PI;
+
+                    let rad = Math.radians((this.starting_direction-Math.degrees(rad))%360)-pi;
+                    
+                    //rotation matrix
+                    let rx = (posx * Math.cos(rad)) - (posy * Math.sin(rad));
+                    let ry = (posx * Math.sin(rad)) + (posy * math.cos(rad));
+
+                    //moves back to center
+                    let center = (rx + self.rotation_point[0], ry + self.rotationpoint[1]);
+
+                    //checks if point will be loaded before displaying point
+                        // to be worked on with advanced map type later...
+                },
+
+                draw_point: function(center, color) {
+                    ctx.beginPath();
+                    ctx.fillStyle = color;
+                    ctx.arc(center[0], center[1], 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                },
+
+                draw_track: function(points, color) {
+                    //builds polygon
+                    ctx.beginPath();
+                    ctx.moveTo(points[0][0],points[0][1]);
+                    for (let i = 1; i < points.length; i++) {
+                        ctx.lineTo(points[i][0], points[i][1]);
+                    }
+                    ctx.closePath(); //draws a line from the last point to the first point
+                    
+                    //colors
+                    ctx.fillStyle = color;
+                    ctx.strokeStyle = "black";
+                    ctx.lineWidth = 3;
+
+                    //renders
+                    ctx.fill();
+                    ctx.stroke();
+                },
+
+                laser: function() {
+                    for (let i = 0; i<25; i++) {
+                        this.draw_point(this.rotation_point, (255-i*10, 255-i*9, 255-i*10))
+                    }
+                },
+
+                bounds: function(poly, x, y) {
+                    n = len(poly)
+                    inside = False
+                    p1x, p1y = poly[0]
+                    for i in range(n + 1):
+                        p2x, p2y = poly[i % n]
+                        if y > min(p1y, p2y):
+                            if y <= max(p1y, p2y):
+                                if x <= max(p1x, p2x):
+                                    if p1y != p2y:
+                                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                                    if p1x == p2x or x <= xints:
+                                        inside = not inside
+                        p1x, p1y = p2x, p2y
+
+                    return inside
+                }
+
+
+            }
+        </script>
+    </body>
+</html>
