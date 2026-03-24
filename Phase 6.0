@@ -1,1 +1,194 @@
 
+<!DOCTYPE html>
+<html>
+    <head><title>RACER GAME</title></head>
+    <body>
+        <canvas id="canvas" width = "800" height="600"></canvas>
+        <script>
+            //CANVAS DISPLAY ----------------------------------------------
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+
+            // Sizes
+            const WIDTH = 800, HEIGHT = 600, SCALE = 75; //new variable name for SQUARE_SIZE      
+
+            function radians(x) {return x / 180 * Math.PI;}
+            function degrees(x) {return x * 180 / Math.PI;}
+
+            // TRACK VARIABLE ----------------------------------------------------------------
+            const track = {
+                //movement:
+                speed: 0,
+                acc: 0,
+                direction: 270,
+                //movement constants
+                rotation_point: [(WIDTH/2), (HEIGHT/4*3)],
+                turn_radius: 3,
+                friction: 0.1,
+                maxspeed: SCALE*2,
+                minacc: .25,
+                // GAME BOARD --------------------------
+                locs: [],
+                start_square: [0,0],
+                starting_direction: 270,
+                locs_start: [],
+                locs_finish: [],
+                mapx: WIDTH/2,
+                mapy: HEIGHT/2,
+                //game board constants
+                start_square: [0,0],
+                starting_direction: 270,
+                mapx: WIDTH/2, mapy: HEIGHT/2,
+                //game board storage: might import later
+                game_map_a: function(){
+                    //map
+                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //start
+                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+                },
+
+                
+                locate_point: function(posx, posy, mapx, mapy, rad) {
+                    let px = posx - mapx;
+                    let py = posy - mapy;
+                    rad = radians(this.starting_direction) - rad - Math.PI;
+                    //rotation matrix
+                    let rx = (px * Math.cos(rad)) - (py * Math.sin(rad));
+                    let ry = (px * Math.sin(rad)) + (py * Math.cos(rad));
+                    //moves back to center
+                    return [rx + this.rotation_point[0], ry + this.rotation_point[1]];},
+
+                draw_point: function(center, color) {
+                    ctx.beginPath();
+                    ctx.fillStyle = color;
+                    ctx.arc(center[0], center[1], 5, 0, 2 * Math.PI);
+                    ctx.fill();},
+
+                draw_track: function(points, color) {
+                    if (points.length === 0) return;
+                    //builds polygon
+                    ctx.beginPath();
+                    ctx.moveTo(points[0][0],points[0][1]);
+                    for (let i = 1; i < points.length; i++) {
+                        ctx.lineTo(points[i][0], points[i][1]);
+                    }
+                    ctx.closePath(); //draws a line from the last point to the first point
+                    //renders path
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();},
+
+                bounds: function(poly, x, y) {
+                    let inside = false;
+                    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                        let xi = poly[i][0], yi = poly[i][1];
+                        let xj = poly[j][0], yj = poly[j][1];
+                        let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                        if (intersect) inside = !inside;
+                    }
+                    return inside;},
+
+                restart: function() {
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.direction = this.starting_direction;
+                    this.speed = 0;},
+
+                draw: function(speeding_up, slowing_down, turning_right, turning_left) {
+                    // Movement Logic
+                    track.acc = 1 - (Math.abs(track.speed)/track.maxspeed);
+
+                    if (speeding_up) track.speed -= track.minacc * track.acc;
+                    if (slowing_down) track.speed += track.minacc * track.acc;
+                    if (turning_left) track.direction -= this.turn_radius;
+                    if (turning_right) track.direction += this.turn_radius;
+
+                    // Friction
+                    if (track.speed < 0) {
+                        if (track.speed - track.friction < 0) track.speed += track.friction;
+                        else track.speed = 0;}
+                    else if (track.speed > 0) {
+                        if (track.speed - track.friction > 0) track.speed -= track.friction;
+                        else track.speed = 0;}
+
+                    //converts direction to radians for processing
+                    let rad = radians(this.direction);
+
+                    //moves car forward at it's speed
+                    this.mapx += this.speed * Math.cos(rad);
+                    this.mapy += this.speed * Math.sin(rad);
+
+                    //clears screen to draw new track
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+                    //translated locs: converts locs's positions into its display
+                    let tlocs = this.locs.map(pos => this.locate_point(pos[0] * SCALE, pos[1] * SCALE, this.mapx, this.mapy, rad));
+                    let tlocs_start = this.locs_start.map(pos => this.locate_point(pos[0] * SCALE, pos[1] * SCALE, this.mapx, this.mapy, rad));
+                    let tlocs_finish = this.locs_finish.map(pos => this.locate_point(pos[0] * SCALE, pos[1] * SCALE, this.mapx, this.mapy, rad));
+                    
+                    //renders track
+                    this.draw_track(tlocs, "grey");
+                    tlocs.forEach(p => this.draw_point(p, "white"));
+                    this.draw_track(tlocs_start, "lime");
+                    this.draw_track(tlocs_finish, "red");
+
+                    //renders car
+                    this.draw_point(this.rotation_point, "red");
+                    
+                    // Checks movement
+                    if (!this.bounds(tlocs, this.rotation_point[0], this.rotation_point[1])) {
+                        ctx.fillStyle = "white";
+                        ctx.font = "20px Arial";
+                        ctx.fillText("OFF TRACK", 20, 40);
+                        this.speed *= 0.8; 
+                    }
+
+                    if (this.bounds(tlocs_finish, this.rotation_point[0], this.rotation_point[1])) {
+                        ctx.fillStyle = "white";
+                        ctx.font = "20px Arial";
+                        ctx.fillText("Finish", 20, 40);
+                        this.speed *= 0.8; 
+                    }
+                    
+
+                //end of draw()
+                }
+            //end of track
+            };
+
+                
+
+            track.game_map_a();
+
+            //gets keyboard input
+            let speeding_up = false, slowing_down = false, turning_left = false, turning_right = false;
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'w' || e.key === 'ArrowUp') speeding_up = true;
+                if (e.key === 's' || e.key === 'ArrowDown') slowing_down = true;
+                if (e.key === 'a' || e.key === 'ArrowLeft') turning_left = true;
+                if (e.key === 'd' || e.key === 'ArrowRight') turning_right = true;
+            });
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'w' || e.key === 'ArrowUp') speeding_up = false;
+                if (e.key === 's' || e.key === 'ArrowDown') slowing_down = false;
+                if (e.key === 'a' || e.key === 'ArrowLeft') turning_left = false;
+                if (e.key === 'd' || e.key === 'ArrowRight') turning_right = false;
+            });
+
+            function update() {
+                track.draw(speeding_up, slowing_down, turning_right, turning_left);
+                requestAnimationFrame(update);
+            }
+            update();
+        </script>
+    </body>
+</html>
