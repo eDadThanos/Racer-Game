@@ -1,9 +1,11 @@
-
+<!-- Timer doesn't work... -->
+ <!-- For Debuggin: CHECK VARIABLE DECLARATION-->
 <!DOCTYPE html>
 <html>
     <head><title>RACER GAME</title></head>
     <body>
         <canvas id="canvas" width = "800" height="600"></canvas>
+        <div id="timer">00:00:00</div>
         <script>
             //CANVAS DISPLAY ----------------------------------------------
             const canvas = document.getElementById("canvas");
@@ -15,6 +17,19 @@
             function radians(x) {return x / 180 * Math.PI;}
             function degrees(x) {return x * 180 / Math.PI;}
 
+            // TIMER
+            let startTime = null;
+            let elapsedTime = 0;
+            function startTimer() {
+                if (startTime === null) {
+                        startTime = Date.now() - elapsedTime;
+                }
+            }
+            function resetTimer() {
+                startTime = null;
+                elapsedTime = 0;
+            }
+
             // TRACK VARIABLE ----------------------------------------------------------------
             const track = {
                 //movement:
@@ -22,11 +37,15 @@
                 acc: 0,
                 direction: 270,
                 //movement constants
-                rotation_point: [(WIDTH/2), (HEIGHT/4*3)],
+                rotation_point: [(WIDTH/2), (HEIGHT/2)],
                 turn_radius: 3,
                 friction: 0.1,
                 maxspeed: SCALE*2,
                 minacc: .25,
+                //gamestate
+                menu: false,
+                restarts: false,
+                isRunning: false,
                 // GAME BOARD --------------------------
                 locs: [],
                 start_square: [0,0],
@@ -100,32 +119,12 @@
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.direction = this.starting_direction;
-                    this.speed = 0;},
+                    this.speed = 0;
+                    this.isRunning = false
+                    this.restarts = false;
+                    resetTimer();},
 
-                draw: function(speeding_up, slowing_down, turning_right, turning_left) {
-                    // Movement Logic
-                    track.acc = 1 - (Math.abs(track.speed)/track.maxspeed);
-
-                    if (speeding_up) track.speed -= track.minacc * track.acc;
-                    if (slowing_down) track.speed += track.minacc * track.acc;
-                    if (turning_left) track.direction -= this.turn_radius;
-                    if (turning_right) track.direction += this.turn_radius;
-
-                    // Friction
-                    if (track.speed < 0) {
-                        if (track.speed - track.friction < 0) track.speed += track.friction;
-                        else track.speed = 0;}
-                    else if (track.speed > 0) {
-                        if (track.speed - track.friction > 0) track.speed -= track.friction;
-                        else track.speed = 0;}
-
-                    //converts direction to radians for processing
-                    let rad = radians(this.direction);
-
-                    //moves car forward at it's speed
-                    this.mapx += this.speed * Math.cos(rad);
-                    this.mapy += this.speed * Math.sin(rad);
-
+                renderScene: function(rad) {
                     //clears screen to draw new track
                     ctx.fillStyle = "black";
                     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -143,6 +142,60 @@
 
                     //renders car
                     this.draw_point(this.rotation_point, "red");
+
+                     return { tlocs, tlocs_finish };
+                },
+
+
+                draw: function(speeding_up, slowing_down, turning_right, turning_left) {
+                    
+                    if (this.restarts){
+                        this.restart();
+                        this.restarts = false;
+                    }
+                    /*
+                     if (this.menu){
+                        const pausedRad = radians(this.direction);
+                        this.renderScene(pausedRad);
+                        ctx.fillStyle = "white";
+                        ctx.font = "20px Arial";
+                        ctx.fillText("PAUSED", 20, 40);
+                        return;
+                    }
+                    */
+                    //Checks if this is the first input of the run, if so, starts timer
+                    if (!this.isRunning && (speeding_up || slowing_down)) {
+                        this.isRunning = true;
+                        startTimer();
+                    } else if (!this.isRunning && (turning_right || turning_left)) {
+                        return;
+                    }
+                    
+
+                    // Movement Logic
+                    this.acc = 1 - (Math.abs(this.speed)/this.maxspeed);
+
+                    if (speeding_up) this.speed -= this.minacc * this.acc;
+                    if (slowing_down) this.speed += this.minacc * this.acc;
+                    if (turning_left) this.direction -= this.turn_radius;
+                    if (turning_right) this.direction += this.turn_radius;
+
+                    // Friction
+                    if (this.speed < 0) {
+                        if (this.speed - this.friction < 0) this.speed += this.friction;
+                        else this.speed = 0;}
+                    else if (this.speed > 0) {
+                        if (this.speed - this.friction > 0) this.speed -= this.friction;
+                        else this.speed = 0;}
+
+                    //converts direction to radians for processing
+                    let rad = radians(this.direction);
+
+                    //moves car forward at it's speed
+                    this.mapx += this.speed * Math.cos(rad);
+                    this.mapy += this.speed * Math.sin(rad);
+
+                    const { tlocs, tlocs_finish } = this.renderScene(rad);
                     
                     // Checks movement
                     if (!this.bounds(tlocs, this.rotation_point[0], this.rotation_point[1])) {
@@ -155,7 +208,7 @@
                     if (this.bounds(tlocs_finish, this.rotation_point[0], this.rotation_point[1])) {
                         ctx.fillStyle = "white";
                         ctx.font = "20px Arial";
-                        ctx.fillText("Finish", 20, 40);
+                        ctx.fillText("FINISH", 20, 40);
                         this.speed *= 0.8; 
                     }
                     
@@ -164,7 +217,6 @@
                 }
             //end of track
             };
-
                 
 
             track.game_map_a();
@@ -176,6 +228,9 @@
                 if (e.key === 's' || e.key === 'ArrowDown') slowing_down = true;
                 if (e.key === 'a' || e.key === 'ArrowLeft') turning_left = true;
                 if (e.key === 'd' || e.key === 'ArrowRight') turning_right = true;
+                //
+                if (e.key === ' ' || e.key === 'Space' || e.key === 'Escape') track.menu = !track.menu;
+                if (e.key === 'r' || e.key === '0') track.restarts = true;
             });
             window.addEventListener('keyup', (e) => {
                 if (e.key === 'w' || e.key === 'ArrowUp') speeding_up = false;
@@ -185,7 +240,17 @@
             });
 
             function update() {
+                //Timer
+                // ngl ai wrote all the code for the timer. Ima pretend i understand how it works
+                if (startTime !== null) elapsedTime = Date.now() - startTime;
+                const totalCentiseconds = Math.floor(elapsedTime / 10);
+                const minutes = String(Math.floor(totalCentiseconds / 6000)).padStart(2, '0');
+                const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, '0');
+                const centiseconds = String(totalCentiseconds % 100).padStart(2, '0');
+                document.getElementById('timer').innerText = `${minutes}:${seconds}:${centiseconds}`;
+                //Track
                 track.draw(speeding_up, slowing_down, turning_right, turning_left);
+                //Renders
                 requestAnimationFrame(update);
             }
             update();
