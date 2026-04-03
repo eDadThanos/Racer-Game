@@ -1,4 +1,4 @@
-<!-- Timer doesn't work... -->
+<!-- wORK ON RESTART && MENU -->
  <!-- For Debuggin: CHECK VARIABLE DECLARATION-->
 <!DOCTYPE html>
 <html>
@@ -29,6 +29,12 @@
                 startTime = null;
                 elapsedTime = 0;
             }
+
+            //Car image
+            const img = new Image();
+            img.src = 'vroom vroom.jpg';
+
+            
 
             // TRACK VARIABLE ----------------------------------------------------------------
             const track = {
@@ -211,6 +217,12 @@
                         ctx.fillText("FINISH", 20, 40);
                         this.speed *= 0.8; 
                     }
+                    // adds car image at 270 degrees, centered on rotation point
+                    ctx.save();
+                    ctx.translate(this.rotation_point[0], this.rotation_point[1]);
+                    ctx.rotate(270 * Math.PI / 180);
+                    ctx.drawImage(img, -img.width * SCALE * 0.002 / 2, -img.height * SCALE * 0.002 / 2, img.width * SCALE * 0.002, img.height * SCALE * 0.002); // image, x, y, width, height
+                    ctx.restore();
                     
 
                 //end of draw()
