@@ -1,18 +1,30 @@
-<!-- wORK ON RESTART && MENU -->
+<!-- Build timer that displays on screen -->
  <!-- For Debuggin: CHECK VARIABLE DECLARATION-->
 <!DOCTYPE html>
 <html>
     <head><title>RACER GAME</title></head>
     <body>
-        <canvas id="canvas" width = "800" height="600"></canvas>
+        <style>
+            body { margin: 0; padding: 0; overflow: hidden; } /* Prevents scrollbars */
+            canvas { display: block; width: 100vw; height: 100vh; }
+        </style>
+        <canvas id="canvas" ></canvas>
         <div id="timer">00:00:00</div>
         <script>
             //CANVAS DISPLAY ----------------------------------------------
             const canvas = document.getElementById("canvas");
             const ctx = canvas.getContext("2d");
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                // Redraw your content here, as resizing clears the canvas
+                }
+
+            window.addEventListener('resize', resize);
+            resize();
 
             // Sizes
-            const WIDTH = 800, HEIGHT = 600, SCALE = 75; //new variable name for SQUARE_SIZE      
+            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 75; //new variable name for SQUARE_SIZE      
 
             function radians(x) {return x / 180 * Math.PI;}
             function degrees(x) {return x * 180 / Math.PI;}
@@ -32,7 +44,19 @@
 
             //Car image
             const img = new Image();
-            img.src = 'vroom vroom.jpg';
+            // default values while image loads
+            let car_width = SCALE * .0002, car_height = SCALE * .0002;
+            let car_points = [[1,1],[1,-1],[-1,-1],[-1,1]]
+            img.onload = () => { car_width = img.width * SCALE * 0.002; car_height = img.height * SCALE * 0.002;
+                                car_points = [ // each point on the car
+                                [track.rotation_point[0] + car_height/2, track.rotation_point[1] + car_width/2],
+                                [track.rotation_point[0] + car_height/2, track.rotation_point[1] - car_width/2],
+                                [track.rotation_point[0] - car_height/2, track.rotation_point[1] - car_width/2],
+                                [track.rotation_point[0] - car_height/2, track.rotation_point[1] + car_width/2]
+                            ];};
+            img.onerror = () => { console.error("error.fetch.missing_image: vroom vroom.jpg not found");};
+            //loads image
+            img.src = "./vroom vroom.jpg";
 
             
 
@@ -64,6 +88,7 @@
                 start_square: [0,0],
                 starting_direction: 270,
                 mapx: WIDTH/2, mapy: HEIGHT/2,
+
                 //game board storage: might import later
                 game_map_a: function(){
                     //map
@@ -202,26 +227,31 @@
                     this.mapy += this.speed * Math.sin(rad);
 
                     const { tlocs, tlocs_finish } = this.renderScene(rad);
-                    
-                    // Checks movement
-                    if (!this.bounds(tlocs, this.rotation_point[0], this.rotation_point[1])) {
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("OFF TRACK", 20, 40);
-                        this.speed *= 0.8; 
-                    }
 
-                    if (this.bounds(tlocs_finish, this.rotation_point[0], this.rotation_point[1])) {
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("FINISH", 20, 40);
-                        this.speed *= 0.8; 
+                    // Checks movement: checks each point of the car with each point of the track.
+                    for( let points of car_points) {
+                        if (!this.bounds(tlocs, points[0], points[1])) {
+                            ctx.fillStyle = "white";
+                            ctx.font = "20px Arial";
+                            ctx.fillText("OFF TRACK", 20, 40);
+                            this.speed *= 0.8; 
+                        }
+
+                        if (this.bounds(tlocs_finish, points[0], points[1])) {
+                            ctx.fillStyle = "white";
+                            ctx.font = "20px Arial";
+                            ctx.fillText("FINISH", 20, 40);
+                            this.speed *= 0.8; 
+                        }
+                        this.draw_point(points, "blue");
+
                     }
+                    
                     // adds car image at 270 degrees, centered on rotation point
                     ctx.save();
                     ctx.translate(this.rotation_point[0], this.rotation_point[1]);
                     ctx.rotate(270 * Math.PI / 180);
-                    ctx.drawImage(img, -img.width * SCALE * 0.002 / 2, -img.height * SCALE * 0.002 / 2, img.width * SCALE * 0.002, img.height * SCALE * 0.002); // image, x, y, width, height
+                    ctx.drawImage(img, -car_width / 2, -car_height / 2, car_width, car_height); // image, x, y, width, height
                     ctx.restore();
                     
 
