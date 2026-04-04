@@ -1,4 +1,4 @@
-<!-- Build timer that displays on screen -->
+<!-- wORK ON RESTART && MENU -->
  <!-- For Debuggin: CHECK VARIABLE DECLARATION-->
 <!DOCTYPE html>
 <html>
@@ -7,9 +7,38 @@
         <style>
             body { margin: 0; padding: 0; overflow: hidden; } /* Prevents scrollbars */
             canvas { display: block; width: 100vw; height: 100vh; }
+            :root {
+                --pixelsize: 4vw;
+            }
+
+            #timer {
+                position: fixed;
+                bottom: 10px;
+                left: 10px;
+                z-index: 1000;
+                color: #fff;
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                pointer-events: none;
+            }
+            #spedometer {
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                z-index: 999;
+                color: #fff;
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                pointer-events: none;
+            }
+
         </style>
-        <canvas id="canvas" ></canvas>
-        <div id="timer">00:00:00</div>
+        <canvas id="canvas" style="z-index: 10;"></canvas>
+        <div id="timer">
+            00:00:00
+        </div>
+        <div id="spedometer">0 mph</div>
+        <!-- z-index makes sure the timer is on top -->
         <script>
             //CANVAS DISPLAY ----------------------------------------------
             const canvas = document.getElementById("canvas");
@@ -290,6 +319,9 @@
                 const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, '0');
                 const centiseconds = String(totalCentiseconds % 100).padStart(2, '0');
                 document.getElementById('timer').innerText = `${minutes}:${seconds}:${centiseconds}`;
+                //Speedometer
+                const speedMph = Math.round(Math.abs(track.speed*5));
+                document.getElementById('spedometer').innerText = `${speedMph} mph`;
                 //Track
                 track.draw(speeding_up, slowing_down, turning_right, turning_left);
                 //Renders
