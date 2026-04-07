@@ -61,7 +61,7 @@
             #tutorial {
                 position: fixed;
                 top: 30%;
-                left: 5%;
+                left: 25%;
                 width: 45%;
                 height: 20%;
                 transform: translate(-50%, -50%);
@@ -75,7 +75,7 @@
             #game_map_a {
                 position: fixed;
                 top: 30%;
-                left: 55%;
+                left: 75%;
                 width: 45%;
                 height: 20%;
                 transform: translate(-50%, -50%);
@@ -89,7 +89,7 @@
             #game_map_b {
                 position: fixed;
                 top: 55%;
-                left: 5%;
+                left: 25%;
                 width: 45%;
                 height: 20%;
                 transform: translate(-50%, -50%);
@@ -103,7 +103,7 @@
             #game_map_c {
                 position: fixed;
                 top: 55%;
-                left: 55%;
+                left: 75%;
                 width: 45%;
                 height: 20%;
                 transform: translate(-50%, -50%);
@@ -122,11 +122,11 @@
         </div>
         <div id="spedometer">0 mph</div>
         <div id="menu_display">Main Game Menu</div>
-        <button id="settings_display" type="button" >Settings</button>
-        <button id="tutorial" type="button" >Tutorial</button>
-        <button id="game_map_a" type="button" >Game Map A</button>
-        <button id="game_map_b" type="button" >Game Map B</button>
-        <button id="game_map_c" type="button" >Game Map C</button>
+        <button id="settings_display" type="button" onclick="showSettings()">Settings</button>
+        <button id="tutorial" type="button" onclick="track.tutorial_map_a()">Tutorial</button>
+        <button id="game_map_a" type="button" onclick="track.game_map_a()">Game Map A</button>
+        <button id="game_map_b" type="button" onclick="track.game_map_b()">Game Map B</button>
+        <button id="game_map_c" type="button" onclick="track.game_map_c()">Game Map C</button>
 
 
         <!-- z-index makes sure the timer is on top -->
@@ -178,6 +178,18 @@
             //loads image
             img.src = "./vroom vroom.jpg";
 
+            //Settings + Menu
+            const menu_display = document.getElementById("menu_display");
+            const settings_display = document.getElementById("settings_display");
+            const tutorial = document.getElementById("tutorial");
+            const game_map_a = document.getElementById("game_map_a");
+            const game_map_b = document.getElementById("game_map_b");
+            const game_map_c = document.getElementById("game_map_c");
+
+            function showSettings() {
+                alert("Settings menu coming soon!");
+            }
+
             
 
             // TRACK VARIABLE ----------------------------------------------------------------
@@ -193,7 +205,7 @@
                 maxspeed: SCALE*2,
                 minacc: .25,
                 //gamestate
-                menu: false,
+                menu: true,
                 restarts: false,
                 isRunning: false,
                 // GAME BOARD --------------------------
@@ -210,6 +222,22 @@
                 mapx: WIDTH/2, mapy: HEIGHT/2,
 
                 //game board storage: might import later
+
+                tutorial_map_a: function(){
+                    //map
+                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //start
+                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+
+                    this.restart();
+
+                },
                 game_map_a: function(){
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
@@ -221,6 +249,36 @@
                     this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
                     //finish
                     this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+
+                    this.restart();
+                },
+                game_map_b: function(){
+                    //map
+                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //start
+                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+
+                    this.restart();
+                },
+                game_map_c: function(){
+                    //map
+                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //start
+                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+
+                    this.restart();
                 },
 
                 
@@ -267,12 +325,23 @@
                     return inside;},
 
                 restart: function() {
+                    //restarts map
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.direction = this.starting_direction;
                     this.speed = 0;
                     this.isRunning = false
                     this.restarts = false;
+
+                    //resets menu
+                    menu_display.style.display = "none";
+                    settings_display.style.display = "none";
+                    tutorial.style.display = "none";
+                    game_map_a.style.display = "none";
+                    game_map_b.style.display = "none";
+                    game_map_c.style.display = "none";
+                    
+                    //resets... timer
                     resetTimer();},
 
                 renderScene: function(rad) {
@@ -305,12 +374,23 @@
                 },
 
                 render_menu: function() {
+                    menu_display.style.display = "";
+                    settings_display.style.display = "";
+                    tutorial.style.display = "";
+                    game_map_a.style.display = "";
+                    game_map_b.style.display = "";
+                    game_map_c.style.display = "";
+
                     const pausedRad = radians(this.direction);
-                        this.renderScene(pausedRad);
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("PAUSED", 20, 40);
-                        return;
+                    this.renderScene(pausedRad);
+                    ctx.fillStyle = "white";
+                    ctx.font = "48px Arial";
+                    ctx.fillText("PAUSED", 20, 40);
+                    
+                    track.speed = 0;
+
+
+                    return;
                 },
 
 
