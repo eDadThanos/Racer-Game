@@ -208,6 +208,7 @@
                 menu: true,
                 restarts: false,
                 isRunning: false,
+                prev_menu: true,
                 // GAME BOARD --------------------------
                 locs: [],
                 start_square: [0,0],
@@ -330,10 +331,11 @@
                     this.mapy = this.start_square[1];
                     this.direction = this.starting_direction;
                     this.speed = 0;
-                    this.isRunning = false
+                    this.isRunning = false;
                     this.restarts = false;
 
                     //resets menu
+                    this.menu = false;
                     menu_display.style.display = "none";
                     settings_display.style.display = "none";
                     tutorial.style.display = "none";
@@ -389,29 +391,35 @@
                     
                     track.speed = 0;
 
-
                     return;
                 },
 
 
                 draw: function(speeding_up, slowing_down, turning_right, turning_left) {
-                    
                     if (this.restarts){
                         this.restart();
-                        this.restarts = false;
-                        this.menu = false;
                     }
-
+                    
                     if (this.menu) {
+                        resetTimer();
+                        this.prev_menu = this.menu;
                         this.render_menu();
                         return;
                     }
+
+                    else if (this.prev_menu != this.menu) {
+                        this.restart();
+                        
+                    }
+
+                    this.prev_menu = this.menu;
 
                     //Checks if this is the first input of the run, if so, starts timer
                     if (!this.isRunning && (speeding_up || slowing_down)) {
                         this.isRunning = true;
                         startTimer();
-                    } else if (!this.isRunning && (turning_right || turning_left)) {
+                    } 
+                    else if (!this.isRunning && (turning_right || turning_left)) {
                         return;
                     }
                     
@@ -456,19 +464,13 @@
                             ctx.fillText("FINISH", 20, 40);
                             this.speed *= 0.8; 
                         }
-                        this.draw_point(points, "blue");
 
                     }
-                    
-                    
 
                 //end of draw()
                 }
             //end of track
             };
-                
-
-            track.game_map_a();
 
             //gets keyboard input
             let speeding_up = false, slowing_down = false, turning_left = false, turning_right = false;
