@@ -6,7 +6,7 @@
     <body>
         <style>
             body { margin: 0; padding: 0; overflow: hidden; } /* Prevents scrollbars */
-            canvas { display: block; width: 100vw; height: 100vh; }
+            canvas { display: block; width: 100vw; height: 100vh; z-index: 500; }
             :root {
                 --pixelsize: 4vw;
             }
@@ -21,6 +21,7 @@
                 text-shadow: 0 1px 2px #000;
                 pointer-events: none;
             }
+
             #spedometer {
                 position: fixed;
                 bottom: 10px;
@@ -32,12 +33,102 @@
                 pointer-events: none;
             }
 
+            #menu_display{
+                position: fixed;
+                top: 10%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                color: #fff;
+                background-color: #99a;
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                pointer-events: none;
+            }
+
+            #settings_display {
+                position: fixed;
+                top: 90%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #111;
+            }
+
+            #tutorial {
+                position: fixed;
+                top: 30%;
+                left: 5%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_a {
+                position: fixed;
+                top: 30%;
+                left: 55%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_b {
+                position: fixed;
+                top: 55%;
+                left: 5%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_c {
+                position: fixed;
+                top: 55%;
+                left: 55%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+
         </style>
-        <canvas id="canvas" style="z-index: 10;"></canvas>
+        <canvas id="canvas"></canvas>
         <div id="timer">
             00:00:00
         </div>
         <div id="spedometer">0 mph</div>
+        <div id="menu_display">Main Game Menu</div>
+        <button id="settings_display" type="button" >Settings</button>
+        <button id="tutorial" type="button" >Tutorial</button>
+        <button id="game_map_a" type="button" >Game Map A</button>
+        <button id="game_map_b" type="button" >Game Map B</button>
+        <button id="game_map_c" type="button" >Game Map C</button>
+
+
         <!-- z-index makes sure the timer is on top -->
         <script>
             //CANVAS DISPLAY ----------------------------------------------
@@ -203,7 +294,23 @@
                     //renders car
                     this.draw_point(this.rotation_point, "red");
 
+                    // adds car image at 270 degrees, centered on rotation point
+                    ctx.save();
+                    ctx.translate(this.rotation_point[0], this.rotation_point[1]);
+                    ctx.rotate(270 * Math.PI / 180);
+                    ctx.drawImage(img, -car_width / 2, -car_height / 2, car_width, car_height); // image, x, y, width, height
+                    ctx.restore();
+
                      return { tlocs, tlocs_finish };
+                },
+
+                render_menu: function() {
+                    const pausedRad = radians(this.direction);
+                        this.renderScene(pausedRad);
+                        ctx.fillStyle = "white";
+                        ctx.font = "20px Arial";
+                        ctx.fillText("PAUSED", 20, 40);
+                        return;
                 },
 
 
@@ -212,17 +319,14 @@
                     if (this.restarts){
                         this.restart();
                         this.restarts = false;
+                        this.menu = false;
                     }
-                    /*
-                     if (this.menu){
-                        const pausedRad = radians(this.direction);
-                        this.renderScene(pausedRad);
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("PAUSED", 20, 40);
+
+                    if (this.menu) {
+                        this.render_menu();
                         return;
                     }
-                    */
+
                     //Checks if this is the first input of the run, if so, starts timer
                     if (!this.isRunning && (speeding_up || slowing_down)) {
                         this.isRunning = true;
@@ -276,12 +380,6 @@
 
                     }
                     
-                    // adds car image at 270 degrees, centered on rotation point
-                    ctx.save();
-                    ctx.translate(this.rotation_point[0], this.rotation_point[1]);
-                    ctx.rotate(270 * Math.PI / 180);
-                    ctx.drawImage(img, -car_width / 2, -car_height / 2, car_width, car_height); // image, x, y, width, height
-                    ctx.restore();
                     
 
                 //end of draw()
