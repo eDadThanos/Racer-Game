@@ -33,6 +33,7 @@
                 pointer-events: none;
             }
 
+            /* Menu Display */
             #menu_display{
                 position: fixed;
                 top: 10%;
@@ -114,6 +115,21 @@
                 background-color: #333;
             }
 
+            /* Finish Animation */
+            #finish_animation {
+                position: fixed;
+                top: 50%;
+                left: -50%;
+                transform: translate(-50%, -50%);
+                z-index: 900;
+                color: rgba(255, 222, 222, 0.85);
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                background-color: rgba(255, 70, 70, 0.85);
+                border: 5px solid rgba(77, 0, 0, 0.85);
+                pointer-events: none;
+            }
+
 
         </style>
         <canvas id="canvas"></canvas>
@@ -127,6 +143,7 @@
         <button id="game_map_a" type="button" onclick="track.game_map_a()">Game Map A</button>
         <button id="game_map_b" type="button" onclick="track.game_map_b()">Game Map B</button>
         <button id="game_map_c" type="button" onclick="track.game_map_c()">Game Map C</button>
+        <div id="finish_animation">Finish! Time: 00:00:00</div>
 
 
         <!-- z-index makes sure the timer is on top -->
@@ -186,6 +203,23 @@
             const game_map_b = document.getElementById("game_map_b");
             const game_map_c = document.getElementById("game_map_c");
 
+            //Finish animation
+            const finish_animation = document.getElementById("finish_animation");
+
+            function finish() {
+                finish_animation.style.display = "";
+                const totalCentiseconds = Math.floor(elapsedTime / 10);
+                const minutes = String(Math.floor(totalCentiseconds / 6000)).padStart(2, '0');
+                const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, '0');
+                const centiseconds = String(totalCentiseconds % 100).padStart(2, '0');
+                finish_animation.innerText = `Finish! Time: ${minutes}:${seconds}:${centiseconds}`;
+                for (let i = 0; i < 100; i++) {
+                    finish_animation.style.left = -50 + i + "%";
+
+                }
+                finish_animation.style.left = "50%";
+            }
+
             function showSettings() {
                 alert("Settings menu coming soon!");
             }
@@ -234,7 +268,7 @@
                     this.starting_direction = 270;
                     this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
                     //finish
-                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+                    this.locs_finish = [[0,2],[0,2.5],[2,2.5],[2,2]]; // see above
 
                     this.restart();
 
@@ -343,7 +377,8 @@
                     game_map_b.style.display = "none";
                     game_map_c.style.display = "none";
                     
-                    //resets... timer
+                    //resets timer and finish
+                    finish_animation.style.display = "none";
                     resetTimer();},
 
                 renderScene: function(rad) {
@@ -376,6 +411,7 @@
                 },
 
                 render_menu: function() {
+                    finish_animation.style.display = "none";
                     menu_display.style.display = "";
                     settings_display.style.display = "";
                     tutorial.style.display = "";
@@ -459,10 +495,11 @@
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
-                            ctx.fillStyle = "white";
-                            ctx.font = "20px Arial";
-                            ctx.fillText("FINISH", 20, 40);
-                            this.speed *= 0.8; 
+                            if (finish_animation.style.display === "none") {
+                                let finish_time = Math.floor(elapsedTime / 10);
+                                finish();
+                                return;
+                            }
                         }
 
                     }
