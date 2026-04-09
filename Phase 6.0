@@ -162,9 +162,9 @@
 
             // Sizes
             const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 75; //new variable name for SQUARE_SIZE      
-
-            function radians(x) {return x / 180 * Math.PI;}
-            function degrees(x) {return x * 180 / Math.PI;}
+            let pi = Math.PI;
+            function radians(x) {return x / 180 * pi;}
+            function degrees(x) {return x * 180 / pi;}
 
             // TIMER
             let startTime = null;
@@ -256,19 +256,38 @@
                 starting_direction: 270,
                 mapx: WIDTH/2, mapy: HEIGHT/2,
 
+                // game board functions to create maps: 
+                add_arc: function(center, radius, startRad, endRad, clockwise) {
+                    let locs = [];
+                    let increment = 1/(radius); // Adjust the increment based on the radius for smoother curves
+                    if (clockwise) {
+                        for (let rad = startRad; rad > endRad; rad -= increment) {
+                            locs.push([center[0] + radius * Math.cos(rad), center[1] + radius * Math.sin(rad)]);
+                        }
+                        locs.push([center[0] + radius * Math.cos(endRad), center[1] + radius * Math.sin(endRad)]);
+                    }
+                    else {
+                        for (let rad = startRad; rad < endRad; rad += increment) {
+                            locs.push([center[0] + radius * Math.cos(rad), center[1] + radius * Math.sin(rad)]);
+                        }
+                        locs.push([center[0] + radius * Math.cos(endRad), center[1] + radius * Math.sin(endRad)]);
+                    }
+                    return locs;
+                },
+
                 //game board storage: might import later
 
                 tutorial_map_a: function(){
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
-                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.starting_direction = 270;
-                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
-                    this.locs_finish = [[0,2],[0,2.5],[2,2.5],[2,2]]; // see above
+                    this.locs_finish = [[0,2.5],[0,3],[2,3],[2,2.5]]; // see above
 
                     this.restart();
 
@@ -277,25 +296,35 @@
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
-                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.starting_direction = 270;
-                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
                     this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
 
                     this.restart();
                 },
                 game_map_b: function(){
-                    //map
-                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //create map:
+                    //out
+                    this.locs.push([0,0],[0,10]);
+                    this.locs.push(... this.add_arc([-5,10],5,radians(0),radians(90),false));
+                    this.locs.push(... this.add_arc([-5,10],5,radians(0),radians(90),false));
+
+                    //back
+
+                    this.locs.push(... this.add_arc([-5,10],7,radians(90),radians(0),true));
+                    this.locs.push([2,0]);
+
+                    
                     //start
-                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.starting_direction = 270;
-                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
                     this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
 
@@ -305,11 +334,11 @@
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
-                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.starting_direction = 270;
-                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
                     this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
 
@@ -320,7 +349,7 @@
                 locate_point: function(posx, posy, mapx, mapy, rad) {
                     let px = posx - mapx;
                     let py = posy - mapy;
-                    rad = radians(this.starting_direction) - rad - Math.PI;
+                    rad = radians(this.starting_direction) - rad - pi;
                     //rotation matrix
                     let rx = (px * Math.cos(rad)) - (py * Math.sin(rad));
                     let ry = (px * Math.sin(rad)) + (py * Math.cos(rad));
@@ -330,7 +359,7 @@
                 draw_point: function(center, color) {
                     ctx.beginPath();
                     ctx.fillStyle = color;
-                    ctx.arc(center[0], center[1], 5, 0, 2 * Math.PI);
+                    ctx.arc(center[0], center[1], 5, 0, 2 * pi);
                     ctx.fill();},
 
                 draw_track: function(points, color) {
@@ -403,7 +432,7 @@
                     // adds car image at 270 degrees, centered on rotation point
                     ctx.save();
                     ctx.translate(this.rotation_point[0], this.rotation_point[1]);
-                    ctx.rotate(270 * Math.PI / 180);
+                    ctx.rotate(270 * pi / 180);
                     ctx.drawImage(img, -car_width / 2, -car_height / 2, car_width, car_height); // image, x, y, width, height
                     ctx.restore();
 
@@ -491,7 +520,7 @@
                             ctx.fillStyle = "white";
                             ctx.font = "20px Arial";
                             ctx.fillText("OFF TRACK", 20, 40);
-                            this.speed *= 0.8; 
+                            //this.speed *= 0.8; 
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
