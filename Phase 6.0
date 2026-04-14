@@ -161,7 +161,7 @@
             resize();
 
             // Sizes
-            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 75; //new variable name for SQUARE_SIZE      
+            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 150; //new variable name for SQUARE_SIZE      
             let pi = Math.PI;
             function radians(x) {return x / 180 * pi;}
             function degrees(x) {return x * 180 / pi;}
@@ -184,7 +184,7 @@
             // default values while image loads
             let car_width = SCALE * .0002, car_height = SCALE * .0002;
             let car_points = [[1,1],[1,-1],[-1,-1],[-1,1]]
-            img.onload = () => { car_width = img.width * SCALE * 0.002; car_height = img.height * SCALE * 0.002;
+            img.onload = () => { car_width = img.width * SCALE * 0.0008; car_height = img.height * SCALE * 0.0008;
                                 car_points = [ // each point on the car
                                 [track.rotation_point[0] + car_height/2, track.rotation_point[1] + car_width/2],
                                 [track.rotation_point[0] + car_height/2, track.rotation_point[1] - car_width/2],
@@ -258,19 +258,21 @@
 
                 // game board functions to create maps: 
                 add_arc: function(center, radius, startRad, endRad, clockwise) {
+                    if (clockwise && endRad > startRad) endRad -= 2*pi;
+                    else if (!clockwise && endRad < startRad) endRad += 2*pi; // allows for angles to continue around 360 degrees
                     let locs = [];
                     let increment = 1/(radius); // Adjust the increment based on the radius for smoother curves
                     if (clockwise) {
                         for (let rad = startRad; rad > endRad; rad -= increment) {
-                            locs.push([center[0] + radius * Math.cos(rad), center[1] + radius * Math.sin(rad)]);
+                            locs.push([(center[0] + radius * Math.cos(rad)), (center[1] + radius * Math.sin(rad))]);
                         }
-                        locs.push([center[0] + radius * Math.cos(endRad), center[1] + radius * Math.sin(endRad)]);
+                        locs.push([(center[0] + radius * Math.cos(endRad)), (center[1] + radius * Math.sin(endRad))]);
                     }
                     else {
                         for (let rad = startRad; rad < endRad; rad += increment) {
-                            locs.push([center[0] + radius * Math.cos(rad), center[1] + radius * Math.sin(rad)]);
+                            locs.push([(center[0] + radius * Math.cos(rad)), (center[1] + radius * Math.sin(rad))]);
                         }
-                        locs.push([center[0] + radius * Math.cos(endRad), center[1] + radius * Math.sin(endRad)]);
+                        locs.push([(center[0] + radius * Math.cos(endRad)), (center[1] + radius * Math.sin(endRad))]);
                     }
                     return locs;
                 },
@@ -310,12 +312,18 @@
                     //create map:
                     //out
                     this.locs.push([0,0],[0,10]);
-                    this.locs.push(... this.add_arc([-5,10],5,radians(0),radians(90),false));
-                    this.locs.push(... this.add_arc([-5,10],5,radians(0),radians(90),false));
+                    this.locs.push(... this.add_arc([7,10],7,radians(180),radians(90),true));
+                    this.locs.push(... this.add_arc([7,22],5,radians(270),radians(360),false));
+                    this.locs.push(... this.add_arc([19,22],7,radians(180),radians(45),true));
+                    this.locs.push(... this.add_arc([19+6*Math.sqrt(2),22+6*Math.sqrt(2)],5,radians(225),radians(90),false));
+                    
 
                     //back
-
-                    this.locs.push(... this.add_arc([-5,10],7,radians(90),radians(0),true));
+                    
+                    this.locs.push(... this.add_arc([19+6*Math.sqrt(2),22+6*Math.sqrt(2)],7,radians(90),radians(225),true));
+                    this.locs.push(... this.add_arc([19,22],5,radians(45),radians(180),false));
+                    this.locs.push(... this.add_arc([7,22],7,radians(360),radians(270),true));
+                    this.locs.push(... this.add_arc([7,10],5,radians(90),radians(180),false));
                     this.locs.push([2,0]);
 
                     
@@ -326,7 +334,7 @@
                     this.starting_direction = 270;
                     this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
-                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+                    this.locs_finish = [[27,27+6*Math.sqrt(2)],[27,29+6*Math.sqrt(2)],[27.5,29+6*Math.sqrt(2)],[27.5,27+6*Math.sqrt(2)]]; // see above
 
                     this.restart();
                 },
@@ -436,7 +444,7 @@
                     ctx.drawImage(img, -car_width / 2, -car_height / 2, car_width, car_height); // image, x, y, width, height
                     ctx.restore();
 
-                     return { tlocs, tlocs_finish };
+                    return { tlocs, tlocs_finish };
                 },
 
                 render_menu: function() {
@@ -494,8 +502,10 @@
 
                     if (speeding_up) this.speed -= this.minacc * this.acc;
                     if (slowing_down) this.speed += this.minacc * this.acc;
-                    if (turning_left) this.direction -= this.turn_radius;
-                    if (turning_right) this.direction += this.turn_radius;
+                    if (turning_left && this.speed <= 0) this.direction -= this.turn_radius;
+                    else if (turning_right && this.speed >= 0) this.direction += this.turn_radius;
+                    if (turning_right && this.speed < 0) this.direction += this.turn_radius;
+                    else if (turning_left && this.speed > 0) this.direction -= this.turn_radius;
 
                     // Friction
                     if (this.speed < 0) {
@@ -520,7 +530,7 @@
                             ctx.fillStyle = "white";
                             ctx.font = "20px Arial";
                             ctx.fillText("OFF TRACK", 20, 40);
-                            //this.speed *= 0.8; 
+                            this.speed *= 0.8; 
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
