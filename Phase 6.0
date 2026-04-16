@@ -161,7 +161,8 @@
             resize();
 
             // Sizes
-            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 150; //new variable name for SQUARE_SIZE      
+            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 150; //new variable name for SQUARE_SIZE 
+            let sqrt2 = Math.sqrt(2);     
             let pi = Math.PI;
             function radians(x) {return x / 180 * pi;}
             function degrees(x) {return x * 180 / pi;}
@@ -311,6 +312,7 @@
                 game_map_b: function(){
                     //create map:
                     //out
+                    this.locs = [];
                     this.locs.push([0,0],[0,10]);
                     this.locs.push(... this.add_arc([7,10],7,radians(180),radians(90),true));
                     this.locs.push(... this.add_arc([7,22],5,radians(270),radians(360),false));
@@ -334,13 +336,35 @@
                     this.starting_direction = 270;
                     this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
-                    this.locs_finish = [[27,27+6*Math.sqrt(2)],[27,29+6*Math.sqrt(2)],[27.5,29+6*Math.sqrt(2)],[27.5,27+6*Math.sqrt(2)]]; // see above
+                    this.locs_finish = [[27,27+6*sqrt2],[27,29+6*sqrt2],[27.5,29+6*sqrt2],[27.5,27+6*sqrt2]]; // see above
 
                     this.restart();
                 },
                 game_map_c: function(){
                     //map
-                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //out
+                    this.locs = [];
+                    this.locs.push(... this.add_arc([3,0],3,radians(180),radians(270),true));
+                    this.locs.push([-8.5,-3]);
+                    //attempting to jump straight into a circle for more accurate connection - correlates with line 9 of desmos
+                    this.locs.push(... this.add_arc([-12.5*sqrt2,-4],5,radians(60),radians(270),false));
+                    this.locs.push(... this.add_arc([5,-5],4,radians(270),radians(315),false));
+                    this.locs.push(... this.add_arc([13,-11],6,radians(115),radians(90),true));
+                    this.locs.push(... this.add_arc([19,-1],4,radians(270),radians(315),false));
+                    
+                    
+
+                    //back
+                    this.locs.push(... this.add_arc([19,-1],4,radians(315),radians(270),true));
+                    this.locs.push(... this.add_arc([13,-11],4,radians(90),radians(115),false));
+                    this.locs.push(... this.add_arc([5,-5],6,radians(315),radians(270),true));
+                    this.locs.push(... this.add_arc([-12.5*sqrt2,-4],7,radians(270),radians(60),true));
+                    this.locs.push([-8,-1]);
+                    this.locs.push(... this.add_arc([3,0],1,radians(270),radians(180),false));
+                    
+                    
+
+                    
                     //start
                     this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
@@ -530,7 +554,7 @@
                             ctx.fillStyle = "white";
                             ctx.font = "20px Arial";
                             ctx.fillText("OFF TRACK", 20, 40);
-                            this.speed *= 0.8; 
+                            this.speed *= 0.99; 
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
