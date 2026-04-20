@@ -125,8 +125,8 @@
                 color: rgba(255, 222, 222, 0.85);
                 font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
                 text-shadow: 0 1px 2px #000;
-                background-color: rgba(255, 70, 70, 0.85);
-                border: 5px solid rgba(77, 0, 0, 0.85);
+                background-color: rgba(222, 49, 49, 0.85);
+                border: 5px solid rgba(150, 16, 16, 0.85);
                 pointer-events: none;
             }
 
@@ -161,7 +161,7 @@
             resize();
 
             // Sizes
-            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 150; //new variable name for SQUARE_SIZE 
+            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 100; //new variable name for SQUARE_SIZE 
             let sqrt2 = Math.sqrt(2);     
             let pi = Math.PI;
             function radians(x) {return x / 180 * pi;}
@@ -206,19 +206,106 @@
 
             //Finish animation
             const finish_animation = document.getElementById("finish_animation");
+            // Loads finish times from local storage
+            function loadRecords() {
+                const saved = localStorage.getItem('gameRecords');
+                if (saved) {
+                    const data = JSON.parse(saved); // Convert string back to object
+                    
+                    // Restore your variables
+                    personal_best_t = data.tutorial || 0;
+                    personal_best_a = data.game_map_a || 0;
+                    personal_best_b = data.game_map_b || 0;
+                    personal_best_c = data.game_map_c || 0;
+                    personal_best_text_t = data.tutorial_text || "00:00:00";
+                    personal_best_text_a = data.game_map_a_text || "00:00:00";
+                    personal_best_text_b = data.game_map_b_text || "00:00:00";
+                    personal_best_text_c = data.game_map_c_text || "00:00:00";
+                }
+            }
+            loadRecords();
+            function saveRecords() {
+                const allRecords = {
+                    tutorial: personal_best_t,
+                    game_map_a: personal_best_a,
+                    game_map_b: personal_best_b,
+                    game_map_c: personal_best_c,
+                    tutorial_text: personal_best_text_t,
+                    game_map_a_text: personal_best_text_a,
+                    game_map_b_text: personal_best_text_b,
+                    game_map_c_text: personal_best_text_c
+                };
+                localStorage.setItem('gameRecords', JSON.stringify(allRecords));
+            }
+
 
             function finish() {
-                finish_animation.style.display = "";
+
                 const totalCentiseconds = Math.floor(elapsedTime / 10);
                 const minutes = String(Math.floor(totalCentiseconds / 6000)).padStart(2, '0');
                 const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, '0');
                 const centiseconds = String(totalCentiseconds % 100).padStart(2, '0');
-                finish_animation.innerText = `Finish! Time: ${minutes}:${seconds}:${centiseconds}`;
-                for (let i = 0; i < 100; i++) {
-                    finish_animation.style.left = -50 + i + "%";
+                const timeString = `${minutes}:${seconds}:${centiseconds}`;
 
+                //checks which map to base time off
+                let personal_best = 0;
+                 let personal_best_text = "";
+                if (track.map_name == "tutorial") {
+                    personal_best = personal_best_t;
+                    personal_best_text = personal_best_text_t;
+                }
+                else if (track.map_name == "game_map_a") {
+                    personal_best = personal_best_a;
+                    personal_best_text = personal_best_text_a;
+                }
+                else if (track.map_name == "game_map_b") {
+                    personal_best = personal_best_b;
+                    personal_best_text = personal_best_text_b;
+                }
+                else if (track.map_name == "game_map_c") {
+                    personal_best = personal_best_c;
+                    personal_best_text = personal_best_text_c;
+                }
+                else {
+                    return;
+                }
+                
+            
+                //is personal best?
+                if (personal_best === null || personal_best === 0 || elapsedTime < personal_best) {
+                    finish_animation.style.display = "";
+                    finish_animation.style.backgroundColor = "rgba(71, 255, 84, 0.85)";
+                    finish_animation.style.border = "2px solid rgba(19, 158, 10, 0.85)";
+                    finish_animation.innerText = `New Record!\nTime: ${timeString}`;
+                    //updates personal best
+                    if (track.map_name == "tutorial") {
+                        personal_best_t = elapsedTime;
+                        personal_best_text_t = timeString;
+                    }
+                    else if (track.map_name == "game_map_a") {
+                        personal_best_a = elapsedTime;
+                        personal_best_text_a = timeString;
+                    }
+                    else if (track.map_name == "game_map_b") {
+                        personal_best_b = elapsedTime;
+                        personal_best_text_b = timeString;
+                    }
+                    else if (track.map_name == "game_map_c") {
+                        personal_best_c = elapsedTime;
+                        personal_best_text_c = timeString;
+                    }
+                    //saves record to local storage
+                    saveRecords();
+                }
+                    
+                else {
+                    finish_animation.style.display = "";
+                    finish_animation.style.backgroundColor = "rgba(222, 49, 49, 0.85)";
+                    finish_animation.style.border = "2px solid rgba(150, 16, 16, 0.85)";
+                    finish_animation.innerText = `Finish! Time: ${minutes}:${seconds}:${centiseconds}\nRecord: ${personal_best_text}`;
                 }
                 finish_animation.style.left = "50%";
+                
             }
 
             function showSettings() {
@@ -245,6 +332,7 @@
                 isRunning: false,
                 prev_menu: true,
                 // GAME BOARD --------------------------
+                map_name : "tutorial",
                 locs: [],
                 start_square: [0,0],
                 starting_direction: 270,
@@ -281,6 +369,7 @@
                 //game board storage: might import later
 
                 tutorial_map_a: function(){
+                    self.map_name = "tutorial";
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
@@ -296,6 +385,7 @@
 
                 },
                 game_map_a: function(){
+                    self.map_name = "game_map_a";
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
@@ -310,6 +400,7 @@
                     this.restart();
                 },
                 game_map_b: function(){
+                    self.map_name = "game_map_b";
                     //create map:
                     //out
                     this.locs = [];
@@ -319,16 +410,13 @@
                     this.locs.push(... this.add_arc([19,22],7,radians(180),radians(45),true));
                     this.locs.push(... this.add_arc([19+6*Math.sqrt(2),22+6*Math.sqrt(2)],5,radians(225),radians(90),false));
                     
-
                     //back
-                    
                     this.locs.push(... this.add_arc([19+6*Math.sqrt(2),22+6*Math.sqrt(2)],7,radians(90),radians(225),true));
                     this.locs.push(... this.add_arc([19,22],5,radians(45),radians(180),false));
                     this.locs.push(... this.add_arc([7,22],7,radians(360),radians(270),true));
                     this.locs.push(... this.add_arc([7,10],5,radians(90),radians(180),false));
                     this.locs.push([2,0]);
 
-                    
                     //start
                     this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
@@ -341,6 +429,7 @@
                     this.restart();
                 },
                 game_map_c: function(){
+                    self.map_name = "game_map_c";
                     //map
                     //out
                     this.locs = [];
@@ -351,28 +440,35 @@
                     this.locs.push(... this.add_arc([5,-5],4,radians(270),radians(315),false));
                     this.locs.push(... this.add_arc([13,-11],6,radians(115),radians(90),true));
                     this.locs.push(... this.add_arc([19,-1],4,radians(270),radians(315),false));
+                    this.locs.push(... this.add_arc([27,-7],6,radians(115),radians(90),true));
+                    this.locs.push(... this.add_arc([33,3],4,radians(270),radians(315),false));
+                    this.locs.push(... this.add_arc([41,-3],6,radians(115),radians(330),true));
+                    this.locs.push(... this.add_arc([32,-20],4,radians(150),radians(330),false));
+                    this.locs.push(... this.add_arc([41.5,-24],6,radians(150),radians(90),true));
+                    this.locs.push([55,-19.5]);
                     
-                    
-
-                    //back
-                    this.locs.push(... this.add_arc([19,-1],4,radians(315),radians(270),true));
+                    // heading back
+                    this.locs.push([55,-21.5]);
+                    this.locs.push(... this.add_arc([41.5,-24],4,radians(90),radians(150),false));
+                    this.locs.push(... this.add_arc([32,-20],6,radians(330),radians(150),true));
+                    this.locs.push(... this.add_arc([41,-3],4,radians(330),radians(115),false));
+                    this.locs.push(... this.add_arc([33,3],6,radians(315),radians(270),true));
+                    this.locs.push(... this.add_arc([27,-7],4,radians(90),radians(115),false));
+                    this.locs.push(... this.add_arc([19,-1],6,radians(315),radians(270),true));
                     this.locs.push(... this.add_arc([13,-11],4,radians(90),radians(115),false));
                     this.locs.push(... this.add_arc([5,-5],6,radians(315),radians(270),true));
                     this.locs.push(... this.add_arc([-12.5*sqrt2,-4],7,radians(270),radians(60),true));
                     this.locs.push([-8,-1]);
                     this.locs.push(... this.add_arc([3,0],1,radians(270),radians(180),false));
                     
-                    
-
-                    
                     //start
-                    this.start_square = [1*SCALE,1*SCALE];
+                    this.start_square = [.5*SCALE,.5*SCALE];
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.starting_direction = 270;
-                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
+                    this.locs_start = [[0,0],[2,0],[2.23,.64],[.18,1]]; // remember -> anti parallel
                     //finish
-                    this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+                    this.locs_finish = [[55,-21.5], [55.5,-21.5], [55.5, -19.5], [55,-19.5]]; 
 
                     this.restart();
                 },
