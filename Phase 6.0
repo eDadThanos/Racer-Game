@@ -1,4 +1,4 @@
-<!-- wORK ON RESTART && MENU -->
+<!-- wORK ON Finish-->
  <!-- For Debuggin: CHECK VARIABLE DECLARATION-->
 <!DOCTYPE html>
 <html>
@@ -222,6 +222,16 @@
                     personal_best_text_b = data.game_map_b_text || "00:00:00";
                     personal_best_text_c = data.game_map_c_text || "00:00:00";
                 }
+                else {
+                    personal_best_t = 0;
+                    personal_best_a = 0;
+                    personal_best_b = 0;
+                    personal_best_c = 0;
+                    personal_best_text_t = "00:00:00";
+                    personal_best_text_a = "00:00:00";
+                    personal_best_text_b = "00:00:00";
+                    personal_best_text_c = "00:00:00";
+                }
             }
             loadRecords();
             function saveRecords() {
@@ -249,7 +259,7 @@
 
                 //checks which map to base time off
                 let personal_best = 0;
-                 let personal_best_text = "";
+                let personal_best_text = "";
                 if (track.map_name == "tutorial") {
                     personal_best = personal_best_t;
                     personal_best_text = personal_best_text_t;
@@ -369,7 +379,7 @@
                 //game board storage: might import later
 
                 tutorial_map_a: function(){
-                    self.map_name = "tutorial";
+                    this.map_name = "tutorial";
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
@@ -385,7 +395,7 @@
 
                 },
                 game_map_a: function(){
-                    self.map_name = "game_map_a";
+                    this.map_name = "game_map_a";
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
@@ -400,7 +410,7 @@
                     this.restart();
                 },
                 game_map_b: function(){
-                    self.map_name = "game_map_b";
+                    this.map_name = "game_map_b";
                     //create map:
                     //out
                     this.locs = [];
@@ -429,7 +439,7 @@
                     this.restart();
                 },
                 game_map_c: function(){
-                    self.map_name = "game_map_c";
+                    this.map_name = "game_map_c";
                     //map
                     //out
                     this.locs = [];
@@ -515,6 +525,13 @@
                         if (intersect) inside = !inside;
                     }
                     return inside;},
+                
+                rebound: function() {
+                    ctx.fillStyle = "white";
+                    ctx.font = "20px Arial";
+                    ctx.fillText("OFF TRACK", 20, 40);
+                    this.speed *= 0.99; 
+                },
 
                 restart: function() {
                     //restarts map
@@ -635,7 +652,7 @@
                         if (this.speed - this.friction > 0) this.speed -= this.friction;
                         else this.speed = 0;}
 
-                    //converts direction to radians for processing
+                    //converts direction to radians
                     let rad = radians(this.direction);
 
                     //moves car forward at it's speed
@@ -647,10 +664,7 @@
                     // Checks movement: checks each point of the car with each point of the track.
                     for( let points of car_points) {
                         if (!this.bounds(tlocs, points[0], points[1])) {
-                            ctx.fillStyle = "white";
-                            ctx.font = "20px Arial";
-                            ctx.fillText("OFF TRACK", 20, 40);
-                            this.speed *= 0.99; 
+                            this.rebound(); // if a point of the car is out of bounds, 
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
