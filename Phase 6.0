@@ -535,14 +535,14 @@
                     return Math.sqrt(Math.pow(p[0] - (v[0] + t * (w[0] - v[0])), 2) + Math.pow(p[1] - (v[1] + t * (w[1] - v[1])), 2));
                 },
                 
-                rebound: function(point) {
+               rebound: function(point, trackPoints, carRad) {
                     let closest_dist = Infinity;
                     let closestSegment = null;
                     let found_point = false;
 
-                    for (let i = 0; i < this.locs.length; i++) {
-                        let p1 = [this.locs[i][0] * SCALE, this.locs[i][1] * SCALE];
-                        let p2 = [this.locs[(i + 1) % this.locs.length][0] * SCALE, this.locs[(i + 1) % this.locs.length][1] * SCALE];
+                    for (let i = 0; i < trackPoints; i++) {
+                        let p1 = trackPoints[i];
+                        let p2 = trackPoints[(i + 1) % trackPoints.length];
 
                         // 1. Remove the bounding box if check for a moment to ensure logic hits
                         let dist = this.pointToSegmentDistance(point, p1, p2);
@@ -561,12 +561,14 @@
                         this.draw_point(closestSegment[1], "green");
 
                         let track_angle = Math.atan2(closestSegment[1][1] - closestSegment[0][1], closestSegment[1][0] - closestSegment[0][0]);
-                        let rad = radians(this.direction);
-                        
-                        this.speed = 0;
+                        // Pick the tangent direction that is closest to current heading
+                        let optionA = track_angle;
+                        let optionB = track_angle + pi;
+                        let diffA = Math.atan2(Math.sin(optionA - carRad), Math.cos(optionA - carRad));
+                        let diffB = Math.atan2(Math.sin(optionB - carRad), Math.cos(optionB - carRad));
+                        let diff = Math.abs(diffA) <= Math.abs(diffB) ? diffA : diffB;
 
-                        // Use the angle normalization trick to ensure correct turning
-                        let diff = Math.min(track_angle - rad, track_angle - rad - pi);
+                        this.speed = 0;
                         
 
                         if (diff < 0) this.direction -= this.turn_radius; // Adjust '5' to your turn speed
@@ -708,7 +710,7 @@
                     // Checks movement: checks each point of the car with each point of the track.
                     for( let points of car_points) {
                         if (!this.bounds(tlocs, points[0], points[1])) {
-                            this.rebound(points); // if a point of the car is out of bounds, 
+                            this.rebound(points, tlocs, rad); // if a point of the car is out of bounds, 
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
