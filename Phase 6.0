@@ -601,6 +601,9 @@
 
                         if (diff < 0) this.direction -= this.turn_radius;
                         else this.direction += this.turn_radius;
+                        this.speed *= Math.cos(diff) * .75;
+                        this.mapx += Math.cos(track_angle);
+                        this.mapy += Math.sin(track_angle);
                     }
                         
                 },
@@ -676,6 +679,9 @@
                     return;
                 },
 
+                breakFunction: function() {
+                    while (true) {}
+                },
 
                 draw: function(speeding_up, slowing_down, turning_right, turning_left) {
                     if (this.restarts){
@@ -764,6 +770,7 @@
                 //
                 if (e.key === ' ' || e.key === 'Space' || e.key === 'Escape') track.menu = !track.menu;
                 if (e.key === 'r' || e.key === '0') track.restarts = true;
+                if (e.key === 'b') track.breakFunction();
             });
             window.addEventListener('keyup', (e) => {
                 if (e.key === 'w' || e.key === 'ArrowUp') speeding_up = false;
