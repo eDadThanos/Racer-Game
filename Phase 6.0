@@ -501,6 +501,23 @@
                     ctx.arc(center[0], center[1], 5, 0, 2 * pi);
                     ctx.fill();},
 
+                draw_line_endpoints: function(endpoint_1, endpoint_2, color) {
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(endpoint_1[0], endpoint_1[1]);
+                    ctx.lineTo(endpoint_2[0], endpoint_2[1]);
+                    ctx.stroke();},
+
+                draw_line_length: function(startpoint, direction, length, color) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(startpoint[0], startpoint[1]);
+                    ctx.lineTo(startpoint[0] + Math.cos(direction) * length, startpoint[1] + Math.sin(direction) * length);
+                    ctx.stroke();},
+
                 draw_track: function(points, color) {
                     if (points.length === 0) return;
                     //builds polygon
@@ -535,16 +552,19 @@
                     return Math.sqrt(Math.pow(p[0] - (v[0] + t * (w[0] - v[0])), 2) + Math.pow(p[1] - (v[1] + t * (w[1] - v[1])), 2));
                 },
                 
-               rebound: function(point, trackPoints, carRad) {
+                rebound: function(point, trackPoints, carRad) {
+                    ctx.fillStyle = "white";
+                    ctx.font = "20px Arial";
+                    ctx.fillText("OFF TRACK", 20, 40);
+
                     let closest_dist = Infinity;
                     let closestSegment = null;
                     let found_point = false;
 
-                    for (let i = 0; i < trackPoints; i++) {
+                    for (let i = 0; i < trackPoints.length; i++) {
                         let p1 = trackPoints[i];
                         let p2 = trackPoints[(i + 1) % trackPoints.length];
 
-                        // 1. Remove the bounding box if check for a moment to ensure logic hits
                         let dist = this.pointToSegmentDistance(point, p1, p2);
                         
                         if (dist < closest_dist) {
@@ -555,28 +575,34 @@
                     }
 
                     if (found_point) {
-                        console.log("Segment found! Distance:", closest_dist);
                         
                         this.draw_point(closestSegment[0], "yellow");
                         this.draw_point(closestSegment[1], "green");
 
                         let track_angle = Math.atan2(closestSegment[1][1] - closestSegment[0][1], closestSegment[1][0] - closestSegment[0][0]);
                         // Pick the tangent direction that is closest to current heading
-                        let optionA = track_angle;
-                        let optionB = track_angle + pi;
-                        let diffA = Math.atan2(Math.sin(optionA - carRad), Math.cos(optionA - carRad));
-                        let diffB = Math.atan2(Math.sin(optionB - carRad), Math.cos(optionB - carRad));
+                        
+                        let optionA = track_angle-pi/2;
+                        let optionB = track_angle+pi/2;
+                        let diffA = Math.atan2(Math.sin(optionA), Math.cos(optionA));
+                        let diffB = Math.atan2(Math.sin(optionB), Math.cos(optionB));
                         let diff = Math.abs(diffA) <= Math.abs(diffB) ? diffA : diffB;
-
-                        this.speed = 0;
                         
 
-                        if (diff < 0) this.direction -= this.turn_radius; // Adjust '5' to your turn speed
+                        //debugging stuff
+                        
+                        let closest_point = [point[0] + Math.cos(carRad) * closest_dist, point[1] + Math.sin(carRad) * closest_dist];
+                        this.draw_line_length(point, carRad, closest_dist, "lime");
+                        this.draw_line_endpoints(closestSegment[0], closestSegment[1], "red");
+                        this.draw_line_length(closest_point, diff, SCALE, "blue");
+                        ctx.fillText(`track angle: ${degrees(track_angle).toFixed(2)}`, 20, 70);
+                        ctx.fillText(`car angle: ${degrees(carRad).toFixed(2)}`, 20, 90);
+                        ctx.fillText(`degrees difference: ${degrees(diff).toFixed(2)}`, 20, 110);
+
+                        if (diff < 0) this.direction -= this.turn_radius;
                         else this.direction += this.turn_radius;
-                        } 
-                        else {
-                        console.log("No segment found for point:", point);
                     }
+                        
                 },
 
                 restart: function() {
@@ -710,7 +736,7 @@
                     // Checks movement: checks each point of the car with each point of the track.
                     for( let points of car_points) {
                         if (!this.bounds(tlocs, points[0], points[1])) {
-                            this.rebound(points, tlocs, rad); // if a point of the car is out of bounds, 
+                            this.rebound(points, tlocs, rad); // if a point of the car is out of bounds
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
