@@ -359,20 +359,20 @@
                 // game board functions to create maps: 
                 add_arc: function(center, radius, startRad, endRad, clockwise) {
                     if (clockwise && endRad > startRad) endRad -= 2*pi;
-                    else if (!clockwise && endRad < startRad) endRad += 2*pi; // allows for angles to continue around 360 degrees
+                    else if (!clockwise && endRad < startRad) endRad += 2*pi;
                     let locs = [];
-                    let increment = 1/(radius); // Adjust the increment based on the radius for smoother curves
+                    let increment = 1/radius; 
                     if (clockwise) {
                         for (let rad = startRad; rad > endRad; rad -= increment) {
-                            locs.push([(center[0] + radius * Math.cos(rad)), (center[1] + radius * Math.sin(rad))]);
+                            locs.push([(center[0]+ radius*Math.cos(rad)), (center[1] + radius*Math.sin(rad))]);
                         }
-                        locs.push([(center[0] + radius * Math.cos(endRad)), (center[1] + radius * Math.sin(endRad))]);
+                        locs.push([(center[0] + radius*Math.cos(endRad)), (center[1] + radius*Math.sin(endRad))]);
                     }
                     else {
                         for (let rad = startRad; rad < endRad; rad += increment) {
-                            locs.push([(center[0] + radius * Math.cos(rad)), (center[1] + radius * Math.sin(rad))]);
+                            locs.push([(center[0]+radius*Math.cos(rad)), (center[1]+radius*Math.sin(rad))]);
                         }
-                        locs.push([(center[0] + radius * Math.cos(endRad)), (center[1] + radius * Math.sin(endRad))]);
+                        locs.push([(center[0]+radius*Math.cos(endRad)), (center[1]+radius*Math.sin(endRad))]);
                     }
                     return locs;
                 },
@@ -599,11 +599,15 @@
                         ctx.fillText(`car angle: ${degrees(carRad).toFixed(2)}`, 20, 90);
                         ctx.fillText(`degrees difference: ${degrees(diff).toFixed(2)}`, 20, 110);
 
+                        //moves mapx and mapy back onto the track
+                        if (!this.bounds(trackPoints, point[0], point[1])) {
+                            this.mapx += Math.cos(carRad) * closest_dist;
+                            this.mapy += Math.sin(carRad) * closest_dist;
+                            this.speed *= Math.cos(diff);
+                        }
+
                         if (diff < 0) this.direction -= this.turn_radius;
                         else this.direction += this.turn_radius;
-                        this.speed *= Math.cos(diff) * .75;
-                        this.mapx += Math.cos(track_angle);
-                        this.mapy += Math.sin(track_angle);
                     }
                         
                 },
@@ -679,9 +683,6 @@
                     return;
                 },
 
-                breakFunction: function() {
-                    while (true) {}
-                },
 
                 draw: function(speeding_up, slowing_down, turning_right, turning_left) {
                     if (this.restarts){
@@ -740,9 +741,11 @@
                     const { tlocs, tlocs_finish } = this.renderScene(rad);
 
                     // Checks movement: checks each point of the car with each point of the track.
+                    let all_points = 0;
                     for( let points of car_points) {
                         if (!this.bounds(tlocs, points[0], points[1])) {
                             this.rebound(points, tlocs, rad); // if a point of the car is out of bounds
+                            all_points++;
                         }
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
@@ -753,6 +756,11 @@
                             }
                         }
 
+                    }
+                    
+                    //remove this for a fun glitch going backwards off the back of the track!
+                    if (all_points === car_points.length) {
+                        track.restarts = true;
                     }
 
                 //end of draw()
@@ -770,7 +778,6 @@
                 //
                 if (e.key === ' ' || e.key === 'Space' || e.key === 'Escape') track.menu = !track.menu;
                 if (e.key === 'r' || e.key === '0') track.restarts = true;
-                if (e.key === 'b') track.breakFunction();
             });
             window.addEventListener('keyup', (e) => {
                 if (e.key === 'w' || e.key === 'ArrowUp') speeding_up = false;
