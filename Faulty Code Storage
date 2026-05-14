@@ -1,25 +1,187 @@
-<!-- Timer doesn't work... -->
+<!-- PROBLEM: POINTS NEEDS TO BE DESCALED -->
+
  <!-- For Debuggin: CHECK VARIABLE DECLARATION-->
 <!DOCTYPE html>
 <html>
     <head><title>RACER GAME</title></head>
     <body>
-        <canvas id="canvas" width = "1800" height="900"></canvas>
-        <div id="timer">00:00:00</div>
+        <style>
+            body { margin: 0; padding: 0; overflow: hidden; } /* Prevents scrollbars */
+            canvas { display: block; width: 100vw; height: 100vh; z-index: 500; }
+            :root {
+                --pixelsize: 4vw;
+            }
+
+            #timer {
+                position: fixed;
+                bottom: 10px;
+                left: 10px;
+                z-index: 1000;
+                color: #fff;
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                pointer-events: none;
+            }
+
+            #spedometer {
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                z-index: 999;
+                color: #fff;
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                pointer-events: none;
+            }
+
+            /* Menu Display */
+            #menu_display{
+                position: fixed;
+                top: 10%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                color: #fff;
+                background-color: #99a;
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                pointer-events: none;
+            }
+
+            #settings_display {
+                position: fixed;
+                top: 90%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #111;
+            }
+
+            #tutorial {
+                position: fixed;
+                top: 30%;
+                left: 25%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_a {
+                position: fixed;
+                top: 30%;
+                left: 75%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_b {
+                position: fixed;
+                top: 55%;
+                left: 25%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_c {
+                position: fixed;
+                top: 55%;
+                left: 75%;
+                width: 45%;
+                height: 20%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            #game_map_3d {
+                position: fixed;
+                top: 80%;
+                left: 25%;
+                width: 30%;
+                height: 15%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                padding: 10px 20px;
+                font-size: var(--pixelsize);
+                color: #aaa;
+                background-color: #333;
+            }
+
+            /* Finish Animation */
+            #finish_animation {
+                position: fixed;
+                top: 50%;
+                left: -50%;
+                transform: translate(-50%, -50%);
+                z-index: 900;
+                color: rgba(255, 222, 222, 0.85);
+                font: 200 var(--pixelsize)/1.2 Arial, sans-serif;
+                text-shadow: 0 1px 2px #000;
+                background-color: rgba(222, 49, 49, 0.85);
+                border: 5px solid rgba(150, 16, 16, 0.85);
+                pointer-events: none;
+            }
+
+
+        </style>
+        <canvas id="canvas"></canvas>
+        <div id="timer">
+            00:00:00
+        </div>
+        <div id="spedometer">0 mph</div>
+        <div id="menu_display">Main Game Menu</div>
+        <button id="settings_display" type="button" onclick="showSettings()">Settings</button>
+        <button id="tutorial" type="button" onclick="track.tutorial_map_a()">Tutorial</button>
+        <button id="game_map_a" type="button" onclick="track.game_map_a()">Game Map A</button>
+        <button id="game_map_b" type="button" onclick="track.game_map_b()">Game Map B</button>
+        <button id="game_map_c" type="button" onclick="track.game_map_c()">Game Map C</button>
+        <button id="game_map_3d" type="button" onclick="track.game_map_3d()">3D Game Map</button>
+        <div id="finish_animation">Finish! Time: 00:00:00</div>
+
+
+        <!-- z-index makes sure the timer is on top -->
         <script>
             //CANVAS DISPLAY ----------------------------------------------
             const canvas = document.getElementById("canvas");
             const ctx = canvas.getContext("2d");
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                // Redraw your content here, as resizing clears the canvas
+                }
 
-            // Car display
-            const img = new Image();
-            img.src = 'vroom vroom.jpg';
+            window.addEventListener('resize', resize);
+            resize();
 
             // Sizes
-            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 75; //new variable name for SQUARE_SIZE      
-
-            function radians(x) {return x / 180 * Math.PI;}
-            function degrees(x) {return x * 180 / Math.PI;}
+            const WIDTH = canvas.width, HEIGHT = canvas.height, SCALE = 100; //new variable name for SQUARE_SIZE 
+            let sqrt2 = Math.sqrt(2);     
+            let pi = Math.PI;
+            function radians(x) {return x / 180 * pi;}
+            function degrees(x) {return x * 180 / pi;}
 
             // TIMER
             let startTime = null;
@@ -34,6 +196,150 @@
                 elapsedTime = 0;
             }
 
+            //Car image
+            const img = new Image();
+            // default values while image loads
+            let car_width = SCALE * .0002, car_height = SCALE * .0002;
+            let car_points = [[1,1],[1,-1],[-1,-1],[-1,1]]
+            img.onload = () => { car_width = img.width * SCALE * 0.0008; car_height = img.height * SCALE * 0.0008;
+                                car_points = [ // each point on the car
+                                [track.rotation_point[0] + car_height/2, track.rotation_point[1] + car_width/2],
+                                [track.rotation_point[0] + car_height/2, track.rotation_point[1] - car_width/2],
+                                [track.rotation_point[0] - car_height/2, track.rotation_point[1] - car_width/2],
+                                [track.rotation_point[0] - car_height/2, track.rotation_point[1] + car_width/2]
+                            ];};
+            img.onerror = () => { console.error("error.fetch.missing_image: vroom vroom.jpg not found");};
+            //loads image
+            img.src = "./vroom vroom.jpg";
+
+            //Settings + Menu
+            const menu_display = document.getElementById("menu_display");
+            const settings_display = document.getElementById("settings_display");
+            const tutorial = document.getElementById("tutorial");
+            const game_map_a = document.getElementById("game_map_a");
+            const game_map_b = document.getElementById("game_map_b");
+            const game_map_c = document.getElementById("game_map_c");
+
+            //Finish animation
+            const finish_animation = document.getElementById("finish_animation");
+            // Loads finish times from local storage
+            function loadRecords() {
+                const saved = localStorage.getItem('gameRecords');
+                if (saved) {
+                    const data = JSON.parse(saved); // Convert string back to object
+                    
+                    // Restore your variables
+                    personal_best_t = data.tutorial || 0;
+                    personal_best_a = data.game_map_a || 0;
+                    personal_best_b = data.game_map_b || 0;
+                    personal_best_c = data.game_map_c || 0;
+                    personal_best_text_t = data.tutorial_text || "00:00:00";
+                    personal_best_text_a = data.game_map_a_text || "00:00:00";
+                    personal_best_text_b = data.game_map_b_text || "00:00:00";
+                    personal_best_text_c = data.game_map_c_text || "00:00:00";
+                }
+                else {
+                    personal_best_t = 0;
+                    personal_best_a = 0;
+                    personal_best_b = 0;
+                    personal_best_c = 0;
+                    personal_best_text_t = "00:00:00";
+                    personal_best_text_a = "00:00:00";
+                    personal_best_text_b = "00:00:00";
+                    personal_best_text_c = "00:00:00";
+                }
+            }
+            loadRecords();
+            function saveRecords() {
+                const allRecords = {
+                    tutorial: personal_best_t,
+                    game_map_a: personal_best_a,
+                    game_map_b: personal_best_b,
+                    game_map_c: personal_best_c,
+                    tutorial_text: personal_best_text_t,
+                    game_map_a_text: personal_best_text_a,
+                    game_map_b_text: personal_best_text_b,
+                    game_map_c_text: personal_best_text_c
+                };
+                localStorage.setItem('gameRecords', JSON.stringify(allRecords));
+            }
+
+
+            function finish() {
+
+                const totalCentiseconds = Math.floor(elapsedTime / 10);
+                const minutes = String(Math.floor(totalCentiseconds / 6000)).padStart(2, '0');
+                const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, '0');
+                const centiseconds = String(totalCentiseconds % 100).padStart(2, '0');
+                const timeString = `${minutes}:${seconds}:${centiseconds}`;
+
+                //checks which map to base time off
+                let personal_best = 0;
+                let personal_best_text = "";
+                if (track.map_name == "tutorial") {
+                    personal_best = personal_best_t;
+                    personal_best_text = personal_best_text_t;
+                }
+                else if (track.map_name == "game_map_a") {
+                    personal_best = personal_best_a;
+                    personal_best_text = personal_best_text_a;
+                }
+                else if (track.map_name == "game_map_b") {
+                    personal_best = personal_best_b;
+                    personal_best_text = personal_best_text_b;
+                }
+                else if (track.map_name == "game_map_c") {
+                    personal_best = personal_best_c;
+                    personal_best_text = personal_best_text_c;
+                }
+                else {
+                    return;
+                }
+                
+            
+                //is personal best?
+                if (personal_best === null || personal_best === 0 || elapsedTime < personal_best) {
+                    finish_animation.style.display = "";
+                    finish_animation.style.backgroundColor = "rgba(71, 255, 84, 0.85)";
+                    finish_animation.style.border = "2px solid rgba(19, 158, 10, 0.85)";
+                    finish_animation.innerText = `New Record!\nTime: ${timeString}`;
+                    //updates personal best
+                    if (track.map_name == "tutorial") {
+                        personal_best_t = elapsedTime;
+                        personal_best_text_t = timeString;
+                    }
+                    else if (track.map_name == "game_map_a") {
+                        personal_best_a = elapsedTime;
+                        personal_best_text_a = timeString;
+                    }
+                    else if (track.map_name == "game_map_b") {
+                        personal_best_b = elapsedTime;
+                        personal_best_text_b = timeString;
+                    }
+                    else if (track.map_name == "game_map_c") {
+                        personal_best_c = elapsedTime;
+                        personal_best_text_c = timeString;
+                    }
+                    //saves record to local storage
+                    saveRecords();
+                }
+                    
+                else {
+                    finish_animation.style.display = "";
+                    finish_animation.style.backgroundColor = "rgba(222, 49, 49, 0.85)";
+                    finish_animation.style.border = "2px solid rgba(150, 16, 16, 0.85)";
+                    finish_animation.innerText = `Finish! Time: ${minutes}:${seconds}:${centiseconds}\nRecord: ${personal_best_text}`;
+                }
+                finish_animation.style.left = "50%";
+                
+            }
+
+            function showSettings() {
+                alert("Settings menu coming soon!");
+            }
+
+            
+
             // TRACK VARIABLE ----------------------------------------------------------------
             const track = {
                 //movement:
@@ -47,10 +353,12 @@
                 maxspeed: SCALE*2,
                 minacc: .25,
                 //gamestate
-                menu: false,
+                menu: true,
                 restarts: false,
                 isRunning: false,
+                prev_menu: true,
                 // GAME BOARD --------------------------
+                map_name : "tutorial",
                 locs: [],
                 start_square: [0,0],
                 starting_direction: 270,
@@ -62,25 +370,162 @@
                 start_square: [0,0],
                 starting_direction: 270,
                 mapx: WIDTH/2, mapy: HEIGHT/2,
+                three_d: false,
+
+                // game board functions to create maps: 
+                add_arc: function(center, radius, startRad, endRad, clockwise) {
+                    if (clockwise && endRad > startRad) endRad -= 2*pi;
+                    else if (!clockwise && endRad < startRad) endRad += 2*pi;
+                    let locs = [];
+                    let increment = 1/radius; 
+                    if (clockwise) {
+                        for (let rad = startRad; rad > endRad; rad -= increment) {
+                            locs.push([(center[0]+ radius*Math.cos(rad)), (center[1] + radius*Math.sin(rad))]);
+                        }
+                        locs.push([(center[0] + radius*Math.cos(endRad)), (center[1] + radius*Math.sin(endRad))]);
+                    }
+                    else {
+                        for (let rad = startRad; rad < endRad; rad += increment) {
+                            locs.push([(center[0]+radius*Math.cos(rad)), (center[1]+radius*Math.sin(rad))]);
+                        }
+                        locs.push([(center[0]+radius*Math.cos(endRad)), (center[1]+radius*Math.sin(endRad))]);
+                    }
+                    return locs;
+                },
+
                 //game board storage: might import later
-                game_map_a: function(){
+
+                tutorial_map_a: function(){
+                    this.map_name = "tutorial";
                     //map
                     this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
                     //start
-                    this.start_square = [1*SCALE,0.5*SCALE];
+                    this.start_square = [1*SCALE,1*SCALE];
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.starting_direction = 270;
-                    this.locs_start = [[0,0],[2,0],[2,0.5],[0,0.5]]; // remember -> anti parallel
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[0,2.5],[0,3],[2,3],[2,2.5]]; // see above
+                    this.three_d = false;
+
+                    this.restart();
+
+                },
+                game_map_a: function(){
+                    this.map_name = "game_map_a";
+                    //map
+                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //start
+                    this.start_square = [1*SCALE,1*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
                     //finish
                     this.locs_finish = [[12,0],[10,0],[10,0.5],[12,0.5]]; // see above
+                    this.three_d = false;
+
+                    this.restart();
+                },
+                game_map_b: function(){
+                    this.map_name = "game_map_b";
+                    //create map:
+                    //out
+                    this.locs = [];
+                    this.locs.push([0,0],[0,10]);
+                    this.locs.push(... this.add_arc([7,10],7,radians(180),radians(90),true));
+                    this.locs.push(... this.add_arc([7,22],5,radians(270),radians(360),false));
+                    this.locs.push(... this.add_arc([19,22],7,radians(180),radians(45),true));
+                    this.locs.push(... this.add_arc([19+6*Math.sqrt(2),22+6*Math.sqrt(2)],5,radians(225),radians(90),false));
+                    
+                    //back
+                    this.locs.push(... this.add_arc([19+6*Math.sqrt(2),22+6*Math.sqrt(2)],7,radians(90),radians(225),true));
+                    this.locs.push(... this.add_arc([19,22],5,radians(45),radians(180),false));
+                    this.locs.push(... this.add_arc([7,22],7,radians(360),radians(270),true));
+                    this.locs.push(... this.add_arc([7,10],5,radians(90),radians(180),false));
+                    this.locs.push([2,0]);
+
+                    //start
+                    this.start_square = [1*SCALE,1*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[27,27+6*sqrt2],[27,29+6*sqrt2],[27.5,29+6*sqrt2],[27.5,27+6*sqrt2]]; // see above
+                    this.three_d = false;
+
+                    this.restart();
+                },
+                game_map_c: function(){
+                    this.map_name = "game_map_c";
+                    //map
+                    //out
+                    this.locs = [];
+                    this.locs.push(... this.add_arc([3,0],3,radians(180),radians(270),true));
+                    this.locs.push([-8.5,-3]);
+                    //attempting to jump straight into a circle for more accurate connection - correlates with line 9 of desmos
+                    this.locs.push(... this.add_arc([-12.5*sqrt2,-4],5,radians(60),radians(270),false));
+                    this.locs.push(... this.add_arc([5,-5],4,radians(270),radians(315),false));
+                    this.locs.push(... this.add_arc([13,-11],6,radians(115),radians(90),true));
+                    this.locs.push(... this.add_arc([19,-1],4,radians(270),radians(315),false));
+                    this.locs.push(... this.add_arc([27,-7],6,radians(115),radians(90),true));
+                    this.locs.push(... this.add_arc([33,3],4,radians(270),radians(315),false));
+                    this.locs.push(... this.add_arc([41,-3],6,radians(115),radians(330),true));
+                    this.locs.push(... this.add_arc([32,-20],4,radians(150),radians(330),false));
+                    this.locs.push(... this.add_arc([41.5,-24],6,radians(150),radians(90),true));
+                    this.locs.push([55,-19.5]);
+                    
+                    // heading back
+                    this.locs.push([55,-21.5]);
+                    this.locs.push(... this.add_arc([41.5,-24],4,radians(90),radians(150),false));
+                    this.locs.push(... this.add_arc([32,-20],6,radians(330),radians(150),true));
+                    this.locs.push(... this.add_arc([41,-3],4,radians(330),radians(115),false));
+                    this.locs.push(... this.add_arc([33,3],6,radians(315),radians(270),true));
+                    this.locs.push(... this.add_arc([27,-7],4,radians(90),radians(115),false));
+                    this.locs.push(... this.add_arc([19,-1],6,radians(315),radians(270),true));
+                    this.locs.push(... this.add_arc([13,-11],4,radians(90),radians(115),false));
+                    this.locs.push(... this.add_arc([5,-5],6,radians(315),radians(270),true));
+                    this.locs.push(... this.add_arc([-12.5*sqrt2,-4],7,radians(270),radians(60),true));
+                    this.locs.push([-8,-1]);
+                    this.locs.push(... this.add_arc([3,0],1,radians(270),radians(180),false));
+                    
+                    //start
+                    this.start_square = [.5*SCALE,.5*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2.23,.64],[.18,1]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[55,-21.5], [55.5,-21.5], [55.5, -19.5], [55,-19.5]]; 
+                    this.three_d = false;
+
+                    this.restart();
+                },
+
+                game_map_3d: function() {
+                    this.map_name = "tutorial";
+                    //map
+                    this.locs = [[0,0],[0,7],[2,9],[4,9],[6,7],[8,9],[10,9],[12,7],[12,0],[10,0],[10,6],[9,7],[6,4],[3,7],[2,6],[2,0]];
+                    //start
+                    this.start_square = [1*SCALE,1*SCALE];
+                    this.mapx = this.start_square[0];
+                    this.mapy = this.start_square[1];
+                    this.starting_direction = 270;
+                    this.locs_start = [[0,0],[2,0],[2,2],[0,2]]; // remember -> anti parallel
+                    //finish
+                    this.locs_finish = [[0,2.5],[0,3],[2,3],[2,2.5]]; // see above
+                    this.three_d = true;
+
+                    this.restart();
                 },
 
                 
                 locate_point: function(posx, posy, mapx, mapy, rad) {
                     let px = posx - mapx;
                     let py = posy - mapy;
-                    rad = radians(this.starting_direction) - rad - Math.PI;
+                    rad = radians(this.starting_direction) - rad - pi;
                     //rotation matrix
                     let rx = (px * Math.cos(rad)) - (py * Math.sin(rad));
                     let ry = (px * Math.sin(rad)) + (py * Math.cos(rad));
@@ -90,8 +535,25 @@
                 draw_point: function(center, color) {
                     ctx.beginPath();
                     ctx.fillStyle = color;
-                    ctx.arc(center[0], center[1], 5, 0, 2 * Math.PI);
+                    ctx.arc(center[0], center[1], 5, 0, 2 * pi);
                     ctx.fill();},
+
+                draw_line_endpoints: function(endpoint_1, endpoint_2, color) {
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(endpoint_1[0], endpoint_1[1]);
+                    ctx.lineTo(endpoint_2[0], endpoint_2[1]);
+                    ctx.stroke();},
+
+                draw_line_length: function(startpoint, direction, length, color) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(startpoint[0], startpoint[1]);
+                    ctx.lineTo(startpoint[0] + Math.cos(direction) * length, startpoint[1] + Math.sin(direction) * length);
+                    ctx.stroke();},
 
                 draw_track: function(points, color) {
                     if (points.length === 0) return;
@@ -119,59 +581,198 @@
                     }
                     return inside;},
 
+                pointToSegmentDistance: function(p, v, w) {
+                    let l2 = Math.pow(v[0] - w[0], 2) + Math.pow(v[1] - w[1], 2);
+                    if (l2 == 0) return Math.sqrt(Math.pow(p[0] - v[0], 2) + Math.pow(p[1] - v[1], 2));
+                    let t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+                    t = Math.max(0, Math.min(1, t));
+                    return Math.sqrt(Math.pow(p[0] - (v[0] + t * (w[0] - v[0])), 2) + Math.pow(p[1] - (v[1] + t * (w[1] - v[1])), 2));
+                },
+                
+                rebound: function(point, trackPoints, carRad) {
+                    ctx.fillStyle = "white";
+                    ctx.font = "20px Arial";
+                    ctx.fillText("OFF TRACK", 20, 40);
+
+                    let closest_dist = Infinity;
+                    let closestSegment = null;
+                    let found_point = false;
+
+                    for (let i = 0; i < trackPoints.length; i++) {
+                        let p1 = trackPoints[i];
+                        let p2 = trackPoints[(i + 1) % trackPoints.length];
+
+                        let dist = this.pointToSegmentDistance(point, p1, p2);
+                        
+                        if (dist < closest_dist) {
+                            closest_dist = dist;
+                            closestSegment = [p1, p2];
+                            found_point = true;
+                        }
+                    }
+
+                    if (found_point) {
+                        
+                        this.draw_point(closestSegment[0], "yellow");
+                        this.draw_point(closestSegment[1], "green");
+
+                        let track_angle = Math.atan2(closestSegment[1][1] - closestSegment[0][1], closestSegment[1][0] - closestSegment[0][0]);
+                        // Pick the tangent direction that is closest to current heading
+                        
+                        let optionA = track_angle-pi/2;
+                        let optionB = track_angle+pi/2;
+                        let diffA = Math.atan2(Math.sin(optionA), Math.cos(optionA));
+                        let diffB = Math.atan2(Math.sin(optionB), Math.cos(optionB));
+                        let diff = Math.abs(diffA) <= Math.abs(diffB) ? diffA : diffB;
+                        
+
+                        //debugging stuff
+                        
+                        let closest_point = [point[0] + Math.cos(carRad) * closest_dist, point[1] + Math.sin(carRad) * closest_dist];
+                        this.draw_line_length(point, carRad, closest_dist, "lime");
+                        this.draw_line_endpoints(closestSegment[0], closestSegment[1], "red");
+                        this.draw_line_length(closest_point, diff, SCALE, "blue");
+                        ctx.fillText(`track angle: ${degrees(track_angle).toFixed(2)}`, 20, 70);
+                        ctx.fillText(`car angle: ${degrees(carRad).toFixed(2)}`, 20, 90);
+                        ctx.fillText(`degrees difference: ${degrees(diff).toFixed(2)}`, 20, 110);
+                        ctx.fillText(`speed: ${this.speed.toFixed(2)}`, 20, 150);
+
+                        //moves mapx and mapy back onto the track
+                        if (!this.bounds(trackPoints, point[0], point[1])) {
+                            this.mapx += Math.cos(carRad) * closest_dist;
+                            this.mapy += Math.sin(carRad) * closest_dist;
+                            this.speed *= Math.cos(diff);
+                        }
+
+                        if (diff < 0) this.direction -= this.turn_radius;
+                        else this.direction += this.turn_radius;
+                    }
+                        
+                },
+
                 restart: function() {
+                    //restarts map
                     this.mapx = this.start_square[0];
                     this.mapy = this.start_square[1];
                     this.direction = this.starting_direction;
                     this.speed = 0;
-                    this.isRunning = false
+                    this.isRunning = false;
                     this.restarts = false;
+
+                    //resets menu
+                    this.menu = false;
+                    menu_display.style.display = "none";
+                    settings_display.style.display = "none";
+                    tutorial.style.display = "none";
+                    game_map_a.style.display = "none";
+                    game_map_b.style.display = "none";
+                    game_map_c.style.display = "none";
+                    game_map_3d.style.display = "none";
+                    
+                    //resets timer and finish
+                    finish_animation.style.display = "none";
                     resetTimer();},
 
                 renderScene: function(rad) {
-                    //clears screen to draw new track
                     ctx.fillStyle = "black";
                     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-                    //translated locs: converts locs's positions into its display
+                    // 1. Initial 2D translation
                     let tlocs = this.locs.map(pos => this.locate_point(pos[0] * SCALE, pos[1] * SCALE, this.mapx, this.mapy, rad));
                     let tlocs_start = this.locs_start.map(pos => this.locate_point(pos[0] * SCALE, pos[1] * SCALE, this.mapx, this.mapy, rad));
                     let tlocs_finish = this.locs_finish.map(pos => this.locate_point(pos[0] * SCALE, pos[1] * SCALE, this.mapx, this.mapy, rad));
                     
-                    //renders track
-                    this.draw_track(tlocs, "grey");
-                    tlocs.forEach(p => this.draw_point(p, "white"));
-                    this.draw_track(tlocs_start, "lime");
-                    this.draw_track(tlocs_finish, "red");
+                    let render_tlocs = tlocs;
+                    let render_start = tlocs_start;
+                    let render_finish = tlocs_finish;
+                    let render_car = this.rotation_point;
 
-                    //renders car
-                    this.draw_point(this.rotation_point, "red");
+                    // 2. Apply 3D perspective
+                    if (this.three_d) {
+                        const focalLength = 400;
+                        const camHeight = 150;
+                        const DEPTH_OFFSET = 1001; 
 
-                     return { tlocs, tlocs_finish };
+                        // Helper to project and center
+                        const project = ([x, y]) => {
+                            let z = y + DEPTH_OFFSET;
+                            return [
+                                (WIDTH / 2) + (x * focalLength) / z,  // Centered X
+                                (HEIGHT / 2) + (camHeight * focalLength) / z // Centered Y
+                            ];
+                        };
+
+                        render_tlocs = tlocs.map(project);
+                        render_start = tlocs_start.map(project);
+                        render_finish = tlocs_finish.map(project);
+                        render_car = project(this.rotation_point);
+                    }
+
+                    // 3. Renders track elements
+                    this.draw_track(render_tlocs, "grey");
+                    render_tlocs.forEach(p => this.draw_point(p, "white"));
+                    this.draw_track(render_start, "lime");
+                    this.draw_track(render_finish, "red");
+
+                    // 4. Renders car at the projected position
+                    this.draw_point(render_car, "red");
+
+                    ctx.save();
+                    ctx.translate(render_car[0], render_car[1]);
+                    ctx.rotate(270 * Math.PI / 180);
+                    ctx.drawImage(img, -car_width / 2, -car_height / 2, car_width, car_height);
+                    ctx.restore();
+
+                    return { tlocs, tlocs_finish };
+                },
+
+                render_menu: function() {
+                    finish_animation.style.display = "none";
+                    menu_display.style.display = "";
+                    settings_display.style.display = "";
+                    tutorial.style.display = "";
+                    game_map_a.style.display = "";
+                    game_map_b.style.display = "";
+                    game_map_c.style.display = "";
+                    game_map_3d.style.display = "";
+
+                    const pausedRad = radians(this.direction);
+                    this.renderScene(pausedRad);
+                    ctx.fillStyle = "white";
+                    ctx.font = "48px Arial";
+                    ctx.fillText("PAUSED", 20, 40);
+                    
+                    track.speed = 0;
+
+                    return;
                 },
 
 
                 draw: function(speeding_up, slowing_down, turning_right, turning_left) {
-                    
                     if (this.restarts){
                         this.restart();
-                        this.restarts = false;
                     }
-                    /*
-                     if (this.menu){
-                        const pausedRad = radians(this.direction);
-                        this.renderScene(pausedRad);
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("PAUSED", 20, 40);
+                    
+                    if (this.menu) {
+                        resetTimer();
+                        this.prev_menu = this.menu;
+                        this.render_menu();
                         return;
                     }
-                    */
+
+                    else if (this.prev_menu != this.menu) {
+                        this.restart();
+                        
+                    }
+
+                    this.prev_menu = this.menu;
+
                     //Checks if this is the first input of the run, if so, starts timer
                     if (!this.isRunning && (speeding_up || slowing_down)) {
                         this.isRunning = true;
                         startTimer();
-                    } else if (!this.isRunning && (turning_right || turning_left)) {
+                    } 
+                    else if (!this.isRunning && (turning_right || turning_left)) {
                         return;
                     }
                     
@@ -181,8 +782,10 @@
 
                     if (speeding_up) this.speed -= this.minacc * this.acc;
                     if (slowing_down) this.speed += this.minacc * this.acc;
-                    if (turning_left) this.direction -= this.turn_radius;
-                    if (turning_right) this.direction += this.turn_radius;
+                    if (turning_left && this.speed <= 0) this.direction -= this.turn_radius;
+                    else if (turning_right && this.speed >= 0) this.direction += this.turn_radius;
+                    if (turning_right && this.speed < 0) this.direction += this.turn_radius;
+                    else if (turning_left && this.speed > 0) this.direction -= this.turn_radius;
 
                     // Friction
                     if (this.speed < 0) {
@@ -192,7 +795,7 @@
                         if (this.speed - this.friction > 0) this.speed -= this.friction;
                         else this.speed = 0;}
 
-                    //converts direction to radians for processing
+                    //converts direction to radians
                     let rad = radians(this.direction);
 
                     //moves car forward at it's speed
@@ -200,32 +803,38 @@
                     this.mapy += this.speed * Math.sin(rad);
 
                     const { tlocs, tlocs_finish } = this.renderScene(rad);
-                    
-                    // Checks movement
-                    if (!this.bounds(tlocs, this.rotation_point[0], this.rotation_point[1])) {
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("OFF TRACK", 20, 40);
-                        this.speed *= 0.8; 
-                    }
 
-                    if (this.bounds(tlocs_finish, this.rotation_point[0], this.rotation_point[1])) {
-                        ctx.fillStyle = "white";
-                        ctx.font = "20px Arial";
-                        ctx.fillText("FINISH", 20, 40);
-                        this.speed *= 0.8; 
+                    // Checks movement: checks each point of the car with each point of the track.
+                    let all_points = 0;
+                    if (this.three_d == false) {
+                    for( let points of car_points) {
+                        if (points[1] === track.rotation_point[1] - car_width/2) {
+                            if (!this.bounds(tlocs, points[0], points[1])) {
+                            this.rebound(points, tlocs, rad); // if a point of the car is out of bounds
+                            all_points++;
+                        }
+                        }
+                        
+
+                        if (this.bounds(tlocs_finish, points[0], points[1])) {
+                            if (finish_animation.style.display === "none") {
+                                let finish_time = Math.floor(elapsedTime / 10);
+                                finish();
+                                return;
+                            }
+                        }
+
                     }
                     
-
-                    
-        
+                    //remove this for a fun glitch going backwards off the back of the track!
+                    if (all_points === car_points.length) {
+                        track.restarts = true;
+                    }
+                }
                 //end of draw()
                 }
             //end of track
             };
-                
-
-            track.game_map_a();
 
             //gets keyboard input
             let speeding_up = false, slowing_down = false, turning_left = false, turning_right = false;
@@ -245,16 +854,6 @@
                 if (e.key === 'd' || e.key === 'ArrowRight') turning_right = false;
             });
 
-            // Loads car image
-            img.onload = function() {
-                        let scaleFactor = 0.5;
-                        ctx.save();
-                        ctx.translate(width/2, height/2); //moves canvas to center of image
-                        ctx.rotate(Math.PI / 2 * 3); //rotates canvas
-                        ctx.drawImage(img, -width/2*scaleFactor, -height/2*scaleFactor, img.width * scaleFactor, img.height * scaleFactor);
-                        ctx.restore(); // resets canvas to 0 degrees
-                    };
-
             function update() {
                 //Timer
                 // ngl ai wrote all the code for the timer. Ima pretend i understand how it works
@@ -264,14 +863,15 @@
                 const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, '0');
                 const centiseconds = String(totalCentiseconds % 100).padStart(2, '0');
                 document.getElementById('timer').innerText = `${minutes}:${seconds}:${centiseconds}`;
-                // TRACK
+                //Speedometer
+                const speedMph = Math.round(Math.abs(track.speed*5));
+                document.getElementById('spedometer').innerText = `${speedMph} mph`;
+                //Track
                 track.draw(speeding_up, slowing_down, turning_right, turning_left);
-
                 //Renders
                 requestAnimationFrame(update);
-
             }
-            img.onload = update;
+            update();
         </script>
     </body>
 </html>
