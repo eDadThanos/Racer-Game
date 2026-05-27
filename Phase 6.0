@@ -139,7 +139,7 @@
         </div>
         <div id="spedometer">0 mph</div>
         <div id="menu_display">Main Game Menu</div>
-        <button id="settings_display" type="button" onclick="showSettings()">Delete Account Data</button>
+        <button id="settings_display" type="button" onclick="showSettings()">Settings</button>
         <button id="tutorial" type="button" onclick="track.tutorial_map_a()">Tutorial</button>
         <button id="game_map_a" type="button" onclick="track.game_map_a()">Game Map A</button>
         <button id="game_map_b" type="button" onclick="track.game_map_b()">Game Map B</button>
@@ -320,18 +320,7 @@
             }
 
             function showSettings() {
-                if (confirm("Are you sure you want to delete all stored data? This cannot be undone.")) {
-                    localStorage.removeItem('gameRecords');
-                    personal_best_t = 0;
-                    personal_best_a = 0;
-                    personal_best_b = 0;
-                    personal_best_c = 0;
-                    personal_best_text_t = "00:00:00";
-                    personal_best_text_a = "00:00:00";
-                    personal_best_text_b = "00:00:00";
-                    personal_best_text_c = "00:00:00";
-                    alert("All data deleted.");
-                }
+                alert("Settings menu coming soon!");
             }
 
             
@@ -609,7 +598,6 @@
                         ctx.fillText(`track angle: ${degrees(track_angle).toFixed(2)}`, 20, 70);
                         ctx.fillText(`car angle: ${degrees(carRad).toFixed(2)}`, 20, 90);
                         ctx.fillText(`degrees difference: ${degrees(diff).toFixed(2)}`, 20, 110);
-                        ctx.fillText(`speed: ${this.speed.toFixed(2)}`, 20, 150);
 
                         //moves mapx and mapy back onto the track
                         if (!this.bounds(trackPoints, point[0], point[1])) {
@@ -673,10 +661,6 @@
                     ctx.restore();
 
                     return { tlocs, tlocs_finish };
-                },
-                
-                render_3d: function() {
-                    // more code to be added
                 },
 
                 render_menu: function() {
@@ -759,13 +743,10 @@
                     // Checks movement: checks each point of the car with each point of the track.
                     let all_points = 0;
                     for( let points of car_points) {
-                        if (points[1] === track.rotation_point[1] - car_width/2) {
-                            if (!this.bounds(tlocs, points[0], points[1])) {
+                        if (!this.bounds(tlocs, points[0], points[1])) {
                             this.rebound(points, tlocs, rad); // if a point of the car is out of bounds
                             all_points++;
                         }
-                        }
-                        
 
                         if (this.bounds(tlocs_finish, points[0], points[1])) {
                             if (finish_animation.style.display === "none") {
@@ -776,8 +757,7 @@
                         }
 
                     }
-                    
-                    //remove this for a fun glitch going backwards off the back of the track!
+
                     if (all_points === car_points.length) {
                         track.restarts = true;
                     }
